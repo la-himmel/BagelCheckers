@@ -12,7 +12,7 @@ void PrintSpelling(CXCursor cursor)
 {
   string str = clang_getCString(clang_getCursorSpelling(cursor));
   // string name = clang_getCString(clang_getCursorDisplayName(cursor));
-  cout << str << endl;
+  //cout << str << endl;
 }
 
 enum AccessSection { ACCESS_PRIVATE, ACCESS_OTHER, ACCESS_NONE };
@@ -69,18 +69,18 @@ enum CXChildVisitResult Unused::FindRefsAndCalls(CXCursor cursor,
   }
   
   if (clang_getCursorKind(cursor) == CXCursor_MemberRefExpr) {
-    cout << "( LOG )member ref expr inside the method! -- ";
+    // cout << "( LOG )member ref expr inside the method! -- ";
     PrintSpelling(cursor);
 
     string entry = GetEntry(cursor);
-    cout << "( LOG ) entry: " << entry << endl;
+    // cout << "( LOG ) entry: " << entry << endl;
 
     //find it in methods:
     vector<string>::iterator it = std::find(methods_.begin(), 
       methods_.end(), entry);
 
     if (it != methods_.end()) {
-      cout << "( LOG ) found - a method, it is useful: " << *it << endl;
+      // cout << "( LOG ) found - a method, it is useful: " << *it << endl;
       methods_.erase(it);
     }
     else {
@@ -88,12 +88,12 @@ enum CXChildVisitResult Unused::FindRefsAndCalls(CXCursor cursor,
 
       if (it != Unused::fields_.end()) {
         it->second++;
-        cout << "( LOG ) Field was used times: " << it->second << endl;
+        // cout << "( LOG ) Field was used times: " << it->second << endl;
         if (it->second > 1)
           fields_.erase(it);
       }
       else {
-        cout << "( LOG ) the variable is not here - it's not private or is useful" << endl;
+        // cout << "( LOG ) the variable is not here - it's not private or is useful" << endl;
       }
     }
   }
@@ -108,16 +108,16 @@ string Unused::GetDiagnostics()
     it != Unused::fields_.end(); ++it) {
       if (it->second == 0) {
         diag.append(it->first);
-        diag.append(" is unused field.\n");
+        diag.append(" field is unused.\n\n");
       } else if (it->second == 1) {
         diag.append(it->first);
-        diag.append(" can be a local variable.\n");
+        diag.append(" can be a local variable.\n\n");
       }
   } 
   for (vector<string>::iterator it = methods_.begin(); 
       it != methods_.end(); ++it) {
     diag.append(*it);
-    diag.append(" is unused.\n");
+    diag.append(" method is unused.\n\n");
   }
   return diag;
 }
@@ -131,12 +131,12 @@ enum CXChildVisitResult Unused::FindClassName(CXCursor cursor,
   }
   
   if (clang_getCursorKind(cursor) == CXCursor_TypeRef) {
-    cout << "*** typeref";
+    // cout << "*** typeref";
     PrintSpelling(cursor);
     
   }
   if (clang_getCursorKind(cursor) == CXCursor_DeclStmt) {
-    cout << "*** declstmt";
+    // cout << "*** declstmt";
     PrintSpelling(cursor);
 
   } 
@@ -161,26 +161,26 @@ enum CXChildVisitResult Unused::FindPrivateItems(CXCursor cursor,
     PrintSpelling(cursor);
   }
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
-    cout << "(FOUND) method -- ";
+    // cout << "(FOUND) method -- ";
     PrintSpelling(cursor);
     if (Unused::accessSection_ == ACCESS_PRIVATE) {
       string entry = GetEntry(cursor);
-      cout << entry << endl;
+      // cout << entry << endl;
       Unused::methods_.push_back(entry);
     }
   }
   if (clang_getCursorKind(cursor) == CXCursor_FieldDecl) {
-    cout << "(FOUND) field -- ";
+    // cout << "(FOUND) field -- ";
     PrintSpelling(cursor);
     if (Unused::accessSection_ == ACCESS_PRIVATE) {
       string entry = GetEntry(cursor);
 
       map<string, int>::iterator it = fields_.find(entry);
 
-      if (it != Unused::fields_.end())
-        cout << "( LOG ) the variable is already there" << endl;
-      else {
-        cout << "( LOG ) the variable is new" << endl;
+      if (it != Unused::fields_.end()) {
+        // cout << "( LOG ) the variable is already there" << endl;
+      } else {
+        // cout << "( LOG ) the variable is new" << endl;
         Unused::fields_.insert(pair<string, int>(entry, 0));
       }
 
@@ -198,7 +198,7 @@ enum CXChildVisitResult Unused::VisitDeclarations(CXCursor cursor, CXCursor pare
   }
     
   if (clang_getCursorKind(cursor) == CXCursor_ClassDecl) {
-    cout << "(FOUND) class declaration -- ";
+    // cout << "(FOUND) class declaration -- ";
     PrintSpelling(cursor);
     Unused::currentClass_ = clang_getCString(clang_getCursorSpelling(cursor));
     Unused::fileSection_ = SECTION_CLASS;
@@ -211,7 +211,7 @@ enum CXChildVisitResult Unused::VisitDeclarations(CXCursor cursor, CXCursor pare
     PrintSpelling(cursor);
   }
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
-    cout << "(FOUND) method -- ";
+    // cout << "(FOUND) method -- ";
     PrintSpelling(cursor);
 
     CXSourceLocation location = clang_getCursorLocation(cursor);
