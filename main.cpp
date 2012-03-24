@@ -1,69 +1,41 @@
-#include "include/clang-c/Index.h"
+#include "Index.h"
+
 #include <iostream>
 #include <stdio.h>
 #include <string>
 #include <sys/types.h>
-#include <errno.h>
 #include <vector>
 #include <list>
 
-#include <unistd.h> 
-#include <dirent.h> 
+#include "Checkers.h"
 
 using namespace std;
 
-int GetFileNames(string dir, vector<string> &files)
-{
-    DIR *dp;
-    struct dirent *dirp;
-    if((dp = opendir(dir.c_str())) == NULL) {
-        cout << "Error(" << errno << ") opening " << dir << endl;
-        return errno;
-    }
-
-    while ((dirp = readdir(dp)) != NULL) {
-        files.push_back(string(dirp->d_name));
-    }
-    closedir(dp);
-    return 0;
-}
-
-class badClass 
-{
-public:
-  int meow;  
-};
-
+//---- Some bad stuff that I'm trying to catch ----
 class Checker 
 {
 public:
-//string GetDiagnostics() { return ""; }
-  
-  string text;
-  string filename;
-};
-
-static enum CXChildVisitResult Visit(CXCursor cursor, CXCursor parent, 
-    CXClientData client_data) 
-{
-  if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
-    cout << "break\n" ;
-    return CXChildVisit_Break;
-  }
-  
-  if (clang_getCursorKind(cursor) == CXCursor_ClassDecl) {
-    cout << "class declaration found!\n";
-
-    string str = clang_getCString(clang_getCursorSpelling(cursor));
-        
-    if (str.at(0) >= 97 && str.at(0) <=122) {
-      cout << "First class name letter is a small letter! class " 
-           << str << endl;
+  void Something() {
+    bool a = 5 > 6; //condition that is never true
+    if (a) {
+      cout << "hello dead code";
     }
-  }
 
-  return CXChildVisit_Continue;
-}
+    if (false) {
+    cout << "";
+    } //condition that is never true
+    }
+
+private:
+  void HeyHey() { //unused private method
+   cout << "hey hey" << endl; 
+   return;
+   cout << "meow"; //dead code
+  };
+  
+  int dummy;  //unused private field
+};
+//-------
 
 int main(int argc, char* argv[])
 {  
@@ -75,31 +47,19 @@ int main(int argc, char* argv[])
     CXDiagnostic diag = clang_getDiagnostic(tUnit, i);
     CXString str = clang_formatDiagnostic(diag, 
         clang_defaultDiagnosticDisplayOptions());
-    cout << clang_getCString(str) << " hey meow " << endl;
-
-    //fprintf(stderr, "%s\n", clang_getCString(str));
-    
+    cout << clang_getCString(str) << endl;
+    //fprintf(stderr, "%s\n", clang_getCString(str));    
     clang_disposeString(str);
   }
   
   CXCursor cur = clang_getTranslationUnitCursor(tUnit);
-
   CXClientData data;
-  clang_visitChildren(cur, Visit, &data);  
+
+  //checking lowercase class name 
+  clang_visitChildren(cur, VisitLowercaseClassName, &data); 
+   
     
-  char buffer[FILENAME_MAX];
-  getcwd(buffer, FILENAME_MAX);
   
-  string dir = buffer;
-  dir.append("/checks/");    //current dir is string(".")
-
-  vector<string> files = vector<string>();
-  GetFileNames(dir, files);
-
-  for (unsigned int i = 0;i < files.size();i++) {
-      //cout << files[i] << endl;
-  }
-
   clang_disposeTranslationUnit(tUnit);
   clang_disposeIndex(index);
   return 0;
