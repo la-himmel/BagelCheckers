@@ -54,6 +54,7 @@ void Checker::UsefulMethod()
 {
   notDummy_ = 1024;
   notDummyButNotEffective_ = 4096;
+  notDummy_ = 15;
   UsefulMethod();
 }
 
@@ -85,10 +86,9 @@ int main(int argc, char* argv[])
   //checking lowercase class name 
   //clang_visitChildren(cur, DetectLowercaseClassName, &data); 
 
-  //checking lowercase class name 
-  Unused unusedChecker;
-  clang_visitChildren(cursor, unusedChecker.VisitDeclarations, &data); 
-   
+  Unused unused;
+  clang_visitChildren(cursor, Unused::VisitDeclarations, &data);
+  cout << unused.GetDiagnostics() << endl;
     
   
   clang_disposeTranslationUnit(tUnit);
