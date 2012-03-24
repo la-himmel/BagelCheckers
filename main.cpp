@@ -27,14 +27,41 @@ public:
     }
 
 private:
+  void AnotherUnusefulMethod();
+  void UsefulMethod();
   void HeyHey() { //unused private method
    cout << "hey hey" << endl; 
    return;
    cout << "meow"; //dead code
   };
-  
-  int dummy;  //unused private field
+
+public:
+  void MeowMeow();
+
+protected:
+private:
+  int notDummy_;
+  int notDummyButNotEffective_;
+  int dummy_;  //unused private field
+  int pig_;    //unused private field
 };
+
+void Checker::AnotherUnusefulMethod() 
+{
+}
+
+void Checker::UsefulMethod() 
+{
+  notDummy_ = 1024;
+  notDummyButNotEffective_ = 4096;
+  UsefulMethod();
+}
+
+void Checker::MeowMeow()
+{
+  notDummy_ = 2;
+  //i'm not dummy!
+}
 //-------
 
 int main(int argc, char* argv[])
@@ -52,11 +79,15 @@ int main(int argc, char* argv[])
     clang_disposeString(str);
   }
   
-  CXCursor cur = clang_getTranslationUnitCursor(tUnit);
+  CXCursor cursor = clang_getTranslationUnitCursor(tUnit);
   CXClientData data;
 
   //checking lowercase class name 
-  clang_visitChildren(cur, VisitLowercaseClassName, &data); 
+  //clang_visitChildren(cur, DetectLowercaseClassName, &data); 
+
+  //checking lowercase class name 
+  Unused unusedChecker;
+  clang_visitChildren(cursor, unusedChecker.VisitDeclarations, &data); 
    
     
   
