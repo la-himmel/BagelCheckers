@@ -7,7 +7,7 @@
 #include <vector>
 #include <list>
 
-// #include "Checkers.h"
+#include "UnusedMembersChecker.h"
 #include "Checkable.h"
 #include "DeadCodeChecker.h"
 
@@ -42,8 +42,8 @@ int main(int argc, char* argv[])
   
   CXCursor cursor = clang_getTranslationUnitCursor(tUnit);
   CXClientData data;
-  // clang_visitChildren(cursor, Unused::Check, &data);
-  //cout << unused.GetDiagnostics() << endl;
+  clang_visitChildren(cursor, UnusedMembersChecker::Check, &data);
+  cout << UnusedMembersChecker::GetDiagnostics() << endl;
   
   clang_visitChildren(cursor, DeadCodeChecker::Check, &data);
   
