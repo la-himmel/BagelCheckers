@@ -21,7 +21,7 @@ enum FileSection { SECTION_METHOD, SECTION_CLASS, SECTION_OTHER };
 class Unused 
 {
 public:
-  static enum CXChildVisitResult VisitDeclarations(CXCursor cursor, 
+  static enum CXChildVisitResult Check(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
   static string GetDiagnostics();
 private:
@@ -69,18 +69,13 @@ enum CXChildVisitResult Unused::FindRefsAndCalls(CXCursor cursor,
   }
   
   if (clang_getCursorKind(cursor) == CXCursor_MemberRefExpr) {
-    // cout << "( LOG )member ref expr inside the method! -- ";
     PrintSpelling(cursor);
 
     string entry = GetEntry(cursor);
-    // cout << "( LOG ) entry: " << entry << endl;
-
-    //find it in methods:
     vector<string>::iterator it = std::find(methods_.begin(), 
       methods_.end(), entry);
 
     if (it != methods_.end()) {
-      // cout << "( LOG ) found - a method, it is useful: " << *it << endl;
       methods_.erase(it);
     }
     else {
@@ -88,13 +83,9 @@ enum CXChildVisitResult Unused::FindRefsAndCalls(CXCursor cursor,
 
       if (it != Unused::fields_.end()) {
         it->second++;
-        // cout << "( LOG ) Field was used times: " << it->second << endl;
         if (it->second > 1)
           fields_.erase(it);
-      }
-      else {
-        // cout << "( LOG ) the variable is not here - it's not private or is useful" << endl;
-      }
+      }      
     }
   }
    
@@ -131,14 +122,11 @@ enum CXChildVisitResult Unused::FindClassName(CXCursor cursor,
   }
   
   if (clang_getCursorKind(cursor) == CXCursor_TypeRef) {
-    // cout << "*** typeref";
     PrintSpelling(cursor);
     
   }
   if (clang_getCursorKind(cursor) == CXCursor_DeclStmt) {
-    // cout << "*** declstmt";
     PrintSpelling(cursor);
-
   } 
   return CXChildVisit_Recurse;
 }
@@ -147,40 +135,31 @@ enum CXChildVisitResult Unused::FindPrivateItems(CXCursor cursor,
  CXCursor parent, CXClientData client_data) 
 {
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
-    cout << "break\n" ;
     return CXChildVisit_Break;
   }
   if (clang_getCursorKind(cursor) == CXCursor_CXXAccessSpecifier) {
     if (clang_getCXXAccessSpecifier(cursor) == CX_CXXPrivate) { 
       Unused::accessSection_ = ACCESS_PRIVATE;
-      //cout << "private: -- ";
     } else {
       Unused::accessSection_ = ACCESS_OTHER;
-      //cout << "public or protected -- ";
     }
     PrintSpelling(cursor);
   }
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
-    // cout << "(FOUND) method -- ";
     PrintSpelling(cursor);
     if (Unused::accessSection_ == ACCESS_PRIVATE) {
       string entry = GetEntry(cursor);
-      // cout << entry << endl;
       Unused::methods_.push_back(entry);
     }
   }
   if (clang_getCursorKind(cursor) == CXCursor_FieldDecl) {
-    // cout << "(FOUND) field -- ";
     PrintSpelling(cursor);
     if (Unused::accessSection_ == ACCESS_PRIVATE) {
       string entry = GetEntry(cursor);
 
       map<string, int>::iterator it = fields_.find(entry);
 
-      if (it != Unused::fields_.end()) {
-        // cout << "( LOG ) the variable is already there" << endl;
-      } else {
-        // cout << "( LOG ) the variable is new" << endl;
+      if (it == Unused::fields_.end()) {
         Unused::fields_.insert(pair<string, int>(entry, 0));
       }
 
@@ -189,7 +168,7 @@ enum CXChildVisitResult Unused::FindPrivateItems(CXCursor cursor,
   return CXChildVisit_Continue;
 }
 
-enum CXChildVisitResult Unused::VisitDeclarations(CXCursor cursor, CXCursor parent, 
+enum CXChildVisitResult Unused::Check(CXCursor cursor, CXCursor parent, 
     CXClientData client_data) 
 {
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
@@ -198,7 +177,6 @@ enum CXChildVisitResult Unused::VisitDeclarations(CXCursor cursor, CXCursor pare
   }
     
   if (clang_getCursorKind(cursor) == CXCursor_ClassDecl) {
-    // cout << "(FOUND) class declaration -- ";
     PrintSpelling(cursor);
     Unused::currentClass_ = clang_getCString(clang_getCursorSpelling(cursor));
     Unused::fileSection_ = SECTION_CLASS;
@@ -207,14 +185,11 @@ enum CXChildVisitResult Unused::VisitDeclarations(CXCursor cursor, CXCursor pare
   }
 
   if (clang_getCursorKind(cursor) == CXCursor_CallExpr) {
-    //cout << "call -- ";
     PrintSpelling(cursor);
   }
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
-    // cout << "(FOUND) method -- ";
     PrintSpelling(cursor);
 
-    CXSourceLocation location = clang_getCursorLocation(cursor);
     CXClientData data;
     clang_visitChildren(cursor, Unused::FindClassName, &data);
     clang_visitChildren(cursor, Unused::FindRefsAndCalls, &data); 
@@ -222,6 +197,7 @@ enum CXChildVisitResult Unused::VisitDeclarations(CXCursor cursor, CXCursor pare
 
   return CXChildVisit_Continue;
 }
+
 //Lowercase detection
 static enum CXChildVisitResult DetectLowercaseClassName(CXCursor cursor, CXCursor parent, 
     CXClientData client_data) 
@@ -241,6 +217,5 @@ static enum CXChildVisitResult DetectLowercaseClassName(CXCursor cursor, CXCurso
            << str << endl;
     }
   }
-
   return CXChildVisit_Continue;
 }

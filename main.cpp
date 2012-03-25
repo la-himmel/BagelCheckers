@@ -7,63 +7,23 @@
 #include <vector>
 #include <list>
 
-#include "Checkers.h"
+// #include "Checkers.h"
+#include "Checkable.h"
+#include "DeadCodeChecker.h"
 
 using namespace std;
 
-//---- Some bad stuff that I'm trying to catch ----
-class Checker 
-{
+class A {
 public:
-  void Something() {
-    bool a = 5 > 6; //condition that is never true
-    if (a) {
-      cout << "hello dead code";
-    }
-
-    if (false) {
-    cout << "";
-    } //condition that is never true
-    }
-
+  void print() { func(); }
 private:
-  void AnotherUnusefulMethod();
-  void UsefulMethod();
-  void HeyHey() { //unused private method
-   cout << "hey hey" << endl; 
-   return;
-   cout << "meow"; //dead code
-  };
-
-public:
-  void MeowMeow();
-
-protected:
-private:
-  int notDummy_;
-  int notDummyButNotEffective_;
-  int dummy_;  //unused private field
-  int pig_;    //unused private field
+  virtual void func() { cout << "A, private" << endl; };
 };
 
-void Checker::AnotherUnusefulMethod() 
-{
-}
-
-void Checker::UsefulMethod() 
-{
-  notDummy_ = 1024;
-  notDummyButNotEffective_ = 4096;
-  notDummy_ = 15;
-  UsefulMethod();
-}
-
-void Checker::MeowMeow()
-{
-  notDummy_ = 2;
-  //i'm not dummy!
-}
-//-------
+class B : public A {
+public:
+  virtual void func() { cout << "B, public" << endl; };
+};
 
 int main(int argc, char* argv[])
 {  
@@ -82,14 +42,10 @@ int main(int argc, char* argv[])
   
   CXCursor cursor = clang_getTranslationUnitCursor(tUnit);
   CXClientData data;
-
-  //checking lowercase class name 
-  //clang_visitChildren(cur, DetectLowercaseClassName, &data); 
-
-  Unused unused;
-  clang_visitChildren(cursor, Unused::VisitDeclarations, &data);
-  cout << unused.GetDiagnostics() << endl;
-    
+  // clang_visitChildren(cursor, Unused::Check, &data);
+  //cout << unused.GetDiagnostics() << endl;
+  
+  clang_visitChildren(cursor, DeadCodeChecker::Check, &data);
   
   clang_disposeTranslationUnit(tUnit);
   clang_disposeIndex(index);
