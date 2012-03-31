@@ -1,3 +1,6 @@
+#ifndef _UNUSEDMEMBERCHECKER_H_
+#define _UNUSEDMEMBERCHECKER_H_
+
 #include "Index.h"
 
 #include <iostream>
@@ -6,17 +9,9 @@
 #include <iterator>
 #include <algorithm>
 
+#include "ConstAndUtilities.h"
+
 using namespace std;
-
-void PrintSpelling(CXCursor cursor)
-{
-  string str = clang_getCString(clang_getCursorSpelling(cursor));
-  // string name = clang_getCString(clang_getCursorDisplayName(cursor));
-  //cout << str << endl;
-}
-
-enum AccessSection { ACCESS_PRIVATE, ACCESS_OTHER, ACCESS_NONE };
-enum FileSection { SECTION_METHOD, SECTION_CLASS, SECTION_OTHER };
 
 class UnusedMembersChecker 
 {
@@ -48,7 +43,7 @@ private:
 
 string UnusedMembersChecker::currentClass_ = "";
 FileSection UnusedMembersChecker::fileSection_ = SECTION_OTHER;
-AccessSection UnusedMembersChecker::accessSection_ = ACCESS_NONE;
+AccessSection UnusedMembersChecker::accessSection_ = ACCESS_OTHER;
 
 vector<string> UnusedMembersChecker::methods_ = vector<string>();
 map<string, int> UnusedMembersChecker::fields_ = map<string, int>();
@@ -172,7 +167,6 @@ enum CXChildVisitResult UnusedMembersChecker::Check(CXCursor cursor, CXCursor pa
     CXClientData client_data) 
 {
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
-    cout << "break\n" ;
     return CXChildVisit_Break;
   }
     
@@ -198,24 +192,4 @@ enum CXChildVisitResult UnusedMembersChecker::Check(CXCursor cursor, CXCursor pa
   return CXChildVisit_Continue;
 }
 
-//Lowercase detection
-static enum CXChildVisitResult DetectLowercaseClassName(CXCursor cursor, CXCursor parent, 
-    CXClientData client_data) 
-{
-  if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
-    cout << "break\n" ;
-    return CXChildVisit_Break;
-  }
-  
-  if (clang_getCursorKind(cursor) == CXCursor_ClassDecl) {
-    cout << "class declaration found!\n";
-
-    string str = clang_getCString(clang_getCursorSpelling(cursor));
-        
-    if (str.at(0) >= 97 && str.at(0) <=122) {
-      cout << "First class name letter is a small letter! class " 
-           << str << endl;
-    }
-  }
-  return CXChildVisit_Continue;
-}
+#endif

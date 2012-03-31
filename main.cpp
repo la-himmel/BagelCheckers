@@ -8,22 +8,44 @@
 #include <list>
 
 #include "UnusedMembersChecker.h"
-#include "Checkable.h"
+#include "AccessLevelChecker.h"
+// #include "Checkable.h"
 #include "DeadCodeChecker.h"
 
 using namespace std;
 
 class A {
 public:
-  void print() { func(); }
+  void print() { /* something */ }
 private:
-  virtual void func() { cout << "A, private" << endl; };
+  virtual void func();
 };
 
 class B : public A {
 public:
-  virtual void func() { cout << "B, public" << endl; };
+  virtual void func();
+  int x;
 };
+
+class C : public A {
+protected:
+  virtual void func();
+};
+
+void A::func() 
+{ 
+  cout << "A, private" << endl; 
+}
+
+void B::func() 
+{ 
+  cout << "B, public" << endl; 
+}
+
+void C::func() 
+{ 
+  cout << "xc" << endl; 
+}
 
 int main(int argc, char* argv[])
 {  
@@ -42,10 +64,11 @@ int main(int argc, char* argv[])
   
   CXCursor cursor = clang_getTranslationUnitCursor(tUnit);
   CXClientData data;
-  clang_visitChildren(cursor, UnusedMembersChecker::Check, &data);
-  cout << UnusedMembersChecker::GetDiagnostics() << endl;
+  clang_visitChildren(cursor, AccessLevelChecker::Check, &data);
+  // clang_visitChildren(cursor, UnusedMembersChecker::Check, &data);
+  cout << AccessLevelChecker::GetDiagnostics() << endl;
   
-  clang_visitChildren(cursor, DeadCodeChecker::Check, &data);
+  //clang_visitChildren(cursor, DeadCodeChecker::Check, &data);
   
   clang_disposeTranslationUnit(tUnit);
   clang_disposeIndex(index);

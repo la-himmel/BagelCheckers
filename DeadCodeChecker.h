@@ -2,8 +2,7 @@
 
 #include <iostream>
 #include <stdio.h>
-#include <map>
-#include <iterator>
+
 #include <algorithm>
 
 using namespace std;
