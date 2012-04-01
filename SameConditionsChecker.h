@@ -23,25 +23,47 @@ private:
   static enum CXChildVisitResult FindStmts(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
 
+  static enum CXChildVisitResult FindBinOperator(CXCursor cursor,
+    CXCursor parent, CXClientData client_data);
+
   static enum CXChildVisitResult FindChildren(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
+
+  static void ChangeLevel(int step); 
+  static void UpdateDiagnostics();
 
   static string GetText(CXCursor cursor);
 
   static string first_;
+  static string second_;
 
   static bool gotOne_;
 
-  // static string diagnostics_;
+  static int level_;
+
+  static string diagnostics_;
 };
 
 string SameConditionsChecker::first_ = "";
-bool SameConditionsChecker::gotOne_ = false;
+string SameConditionsChecker::second_ = "";
+string SameConditionsChecker::diagnostics_ = "";
+
+bool SameConditionsChecker::gotOne_ = true;
+int SameConditionsChecker::level_ = 0;
 
 string SameConditionsChecker::GetDiagnostics() 
 {  
-  string str;
-  return str; //SameConditionsChecker::diagnostics_;
+  return SameConditionsChecker::diagnostics_;
+}
+
+void SameConditionsChecker::UpdateDiagnostics()
+{
+  string str = "Condition '";
+  str.append(SameConditionsChecker::first_);
+  str.append("' contains or is equal to condition '");
+  str.append(SameConditionsChecker::second_);
+  str.append("'. Are you sure?\n");
+  SameConditionsChecker::diagnostics_.append(str);
 }
 
 enum CXChildVisitResult SameConditionsChecker::FindChildren(CXCursor cursor,
@@ -52,19 +74,27 @@ enum CXChildVisitResult SameConditionsChecker::FindChildren(CXCursor cursor,
   }
   
   if (clang_getCursorKind(cursor) == CXCursor_BinaryOperator) {
-    
+    string str = SameConditionsChecker::GetText(cursor);
+
     if (!SameConditionsChecker::gotOne_) {
-      SameConditionsChecker::first_ = SameConditionsChecker::GetText(cursor);
+      SameConditionsChecker::first_ = str; 
       SameConditionsChecker::gotOne_ = true;
 
-      cout << "first: ";
-
     } else {
-      cout << "second: ";
+      if (str == SameConditionsChecker::first_ || 
+        SameConditionsChecker::first_.find(str) != string::npos) {
+        // cout << "first contains or equals to second" << endl;
+        
+        SameConditionsChecker::second_ = str;
+        SameConditionsChecker::UpdateDiagnostics();
+      }
+
+      SameConditionsChecker::ChangeLevel(-1);     
+
       SameConditionsChecker::gotOne_ = false;
+      SameConditionsChecker::first_ = "";
+      SameConditionsChecker::second_ = "";
     }
-    string str = SameConditionsChecker::GetText(cursor);
-    cout << "binary '" << str << "' " << endl;
   } 
 
   return CXChildVisit_Continue;
@@ -79,18 +109,34 @@ enum CXChildVisitResult SameConditionsChecker::FindStmts(CXCursor cursor,
 
   if ((clang_getCursorKind(cursor) == CXCursor_IfStmt) || 
     (clang_getCursorKind(cursor) == CXCursor_WhileStmt)) {
-    cout << "If while " << endl;
+  
     CXClientData data;
-    clang_visitChildren(cursor, SameConditionsChecker::FindStmts, &data); 
+    clang_visitChildren(cursor, SameConditionsChecker::FindBinOperator, &data); 
+  
   } 
 
-  if (clang_getCursorKind(cursor) == CXCursor_ForStmt) {
-    cout << "for" << endl;
-          // CXClientData data;
-          // clang_visitChildren(c, SameConditionsChecker::FindClassName, &data); 
-  } 
+  return CXChildVisit_Recurse;
+}
+
+void SameConditionsChecker::ChangeLevel(int step) 
+{
+  if (step > 0)
+    SameConditionsChecker::level_++;
+  if (step < 0)
+    SameConditionsChecker::level_--;
+  if (step == 0)
+    SameConditionsChecker::level_ = 1;
+}
+
+enum CXChildVisitResult SameConditionsChecker::FindBinOperator(CXCursor cursor,
+ CXCursor parent, CXClientData client_data) 
+{
+  if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
+    return CXChildVisit_Break;
+  }
   
   if (clang_getCursorKind(cursor) == CXCursor_BinaryOperator) {
+    SameConditionsChecker::ChangeLevel(1);
     CXClientData data;
     clang_visitChildren(cursor, SameConditionsChecker::FindChildren, &data); 
 
@@ -116,28 +162,23 @@ enum CXChildVisitResult SameConditionsChecker::Check(CXCursor cursor, CXCursor p
 
 string SameConditionsChecker::GetText(CXCursor cursor)
 {
-  CXSourceLocation loc = clang_getCursorLocation(cursor);
   CXFile file1;
-  unsigned line, column, offset;
-  clang_getSpellingLocation(loc, &file1, &line, &column, &offset);
-  string filename = clang_getCString(clang_getFileName(file1));
-  char *fn = (char *) clang_getCString(clang_getFileName(file1));
 
-  CXSourceRange range = clang_getCursorExtent(cursor);
+  unsigned line, column, offset, stOffs, endOffset;
+  clang_getSpellingLocation(clang_getCursorLocation(cursor), &file1, &line, &column, &offset);
+  
+  CXSourceLocation start = clang_getRangeStart(clang_getCursorExtent(cursor));
+  CXSourceLocation end = clang_getRangeEnd(clang_getCursorExtent(cursor));
 
-  CXSourceLocation start = clang_getRangeStart(range);
-  CXSourceLocation end = clang_getRangeEnd(range);
-
-  unsigned stOffs, endOffs;
   clang_getSpellingLocation(start, &file1, &line, &column, &stOffs);
-  clang_getSpellingLocation(end, &file1, &line, &column, &endOffs);
+  clang_getSpellingLocation(end, &file1, &line, &column, &endOffset);
 
   FILE *file;
+  char *fn = (char *) clang_getCString(clang_getFileName(file1));
   file = fopen(fn, "r");
   fseek (file, offset, SEEK_SET);
-
-  char *buffer = (char*) malloc (sizeof(char)*(endOffs -stOffs));
-  fread (buffer, 1, (endOffs -stOffs), file);
+  char *buffer = (char*) malloc (sizeof(char)*(endOffset -stOffs));
+  fread (buffer, 1, (endOffset -stOffs), file);
 
   fclose (file);
 
@@ -145,5 +186,7 @@ string SameConditionsChecker::GetText(CXCursor cursor)
   str.assign(buffer);
   return str;
 }
+
+
 
 #endif

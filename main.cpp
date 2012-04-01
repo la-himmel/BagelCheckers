@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
   CXClientData data;
   clang_visitChildren(cursor, SameConditionsChecker::Check, &data);
   // clang_visitChildren(cursor, UnusedMembersChecker::Check, &data);
-  // cout << AccessLevelChecker::GetDiagnostics() << endl;
+  cout << SameConditionsChecker::GetDiagnostics() << endl;
   
   //clang_visitChildren(cursor, DeadCodeChecker::Check, &data);
   
