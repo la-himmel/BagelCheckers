@@ -9,42 +9,46 @@
 
 #include "UnusedMembersChecker.h"
 #include "AccessLevelChecker.h"
-// #include "Checkable.h"
 #include "DeadCodeChecker.h"
+#include "SameConditionsChecker.h"
 
 using namespace std;
 
-class A {
+class K {
 public:
-  void print() { /* something */ }
-private:
-  virtual void func();
+  void func(int k, int j);
 };
 
-class B : public A {
-public:
-  virtual void func();
-  int x;
-};
+void f()
+{
+  int k = 456;
+  int g = 546-90;
 
-class C : public A {
-protected:
-  virtual void func();
-};
-
-void A::func() 
-{ 
-  cout << "A, private" << endl; 
+  if (k == g || k == g) {
+    cout << "hey" << endl;
+    int h = k - 50 + 97 *g;
+    if (h < k && h > k && h < k)
+      cout << "h" << endl;
+  } 
+  for (int i = 0; i < 1; i++) {
+    cout << "h";
+  }
 }
 
-void B::func() 
-{ 
-  cout << "B, public" << endl; 
-}
-
-void C::func() 
-{ 
-  cout << "xc" << endl; 
+void K::func(int k, int j) 
+{
+  if (k == j || k == j || k != j || k == j) {
+    cout << "hey" << endl;
+    int h = k - 50 + 97 *j;
+    if (h < k && h > k && h < k)
+      cout << "h" << endl;
+  }
+  if ( k < 967*j)
+    cout << "fgdfg" << endl;
+  int k1;
+  while (k1 < 5 || k1 < 5) {
+    k1 = 5;
+  }
 }
 
 int main(int argc, char* argv[])
@@ -64,9 +68,9 @@ int main(int argc, char* argv[])
   
   CXCursor cursor = clang_getTranslationUnitCursor(tUnit);
   CXClientData data;
-  clang_visitChildren(cursor, AccessLevelChecker::Check, &data);
+  clang_visitChildren(cursor, SameConditionsChecker::Check, &data);
   // clang_visitChildren(cursor, UnusedMembersChecker::Check, &data);
-  cout << AccessLevelChecker::GetDiagnostics() << endl;
+  // cout << AccessLevelChecker::GetDiagnostics() << endl;
   
   //clang_visitChildren(cursor, DeadCodeChecker::Check, &data);
   
