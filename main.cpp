@@ -7,48 +7,36 @@
 #include <vector>
 #include <list>
 
-#include "UnusedMembersChecker.h"
-#include "AccessLevelChecker.h"
-#include "DeadCodeChecker.h"
-#include "SameConditionsChecker.h"
+// #include "UnusedMembersChecker.h"
+// #include "AccessLevelChecker.h"
+// #include "DeadCodeChecker.h"
+// #include "SameConditionsChecker.h"
+#include "ConditionChecker.h"
 
 using namespace std;
 
-class K {
+class P {
 public:
-  void func(int k, int j);
+  void DoSmth();
 };
 
-void f()
+void P::DoSmth() 
 {
-  int k = 456;
-  int g = 546-90;
+  int a = 5, b = 6, c = 7, d = 8, e = 7, f = 10;
 
-  if (k == g || k == g) {
-    cout << "hey" << endl;
-    int h = k - 50 + 97 *g;
-    if (h < k && h > k && h < k)
-      cout << "h" << endl;
-  } 
-  for (int i = 0; i < 1; i++) {
-    cout << "h";
-  }
-}
+  if (a == b) {
+    // if (a == b) {
+    //   c = 56;
+    // }
 
-void K::func(int k, int j) 
-{
-  if (k == j || k == j || k != j || k == j) {
-    cout << "hey" << endl;
-    int h = k - 50 + 97 *j;
-    if (h < k && h > k && h < k)
-      cout << "h" << endl;
+    // if (a < a + 5)
+      cout << "5" << endl;
+  // } else {
+  //   if (a == b)
+  //     cout << "same" << endl;    
   }
-  if ( k < 967*j)
-    cout << "fgdfg" << endl;
-  int k1;
-  while (k1 < 5 || k1 < 5) {
-    k1 = 5;
-  }
+  if (a == b)
+    cout << "you repeat yourself" << endl;
 }
 
 int main(int argc, char* argv[])
@@ -68,9 +56,9 @@ int main(int argc, char* argv[])
   
   CXCursor cursor = clang_getTranslationUnitCursor(tUnit);
   CXClientData data;
-  clang_visitChildren(cursor, SameConditionsChecker::Check, &data);
+  clang_visitChildren(cursor, ConditionChecker::Check, &data);
   // clang_visitChildren(cursor, UnusedMembersChecker::Check, &data);
-  cout << SameConditionsChecker::GetDiagnostics() << endl;
+  // cout << ConditionChecker::GetDiagnostics() << endl;
   
   //clang_visitChildren(cursor, DeadCodeChecker::Check, &data);
   

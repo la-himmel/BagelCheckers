@@ -64,6 +64,7 @@ private:
 
 public:
   void MeowMeow();
+  int Smth();
 
 protected:
 private:
@@ -73,6 +74,12 @@ private:
   int pig_;    //unused private field
 };
 
+int Checker::Smth()
+{
+  cout << "returns nothing";  
+  return 0;
+}
+
 void Checker::AnotherUnusefulMethod() 
 {
   int k = 6;
@@ -80,7 +87,7 @@ void Checker::AnotherUnusefulMethod()
   l = 6;
   l = 10;
 
-  if (56 > 55) {
+  if (notDummy_ > 55 - notDummy_) {
     return;
     notDummy_ = 56;
   }
@@ -94,6 +101,20 @@ void Checker::UsefulMethod()
   if (1) {
     notDummy_ = 15;  
   }
+  int x = notDummy_ > 5 ? notDummyButNotEffective_ : notDummyButNotEffective_;
+  cout << x << endl;
+
+  if (x == 5) {
+    cout << "5" << endl;
+    if (x == 5)
+      cout << "4";
+  }
+  if (x == 5)
+    cout << "r";
+  else {
+    if (x == 5)
+      cout << "78";
+  }
   
   UsefulMethod();
   return;
@@ -103,6 +124,7 @@ void Checker::UsefulMethod()
 void Checker::MeowMeow()
 {
   notDummy_ = 2;
+
 }
 
 class A {
@@ -139,6 +161,41 @@ void C::func()
 }
 
 
+class K {
+public:
+  void func(int k, int j);
+};
 
+void f()
+{
+  int k = 456;
+  int g = 546-90;
+
+  if (k == g || k == g) {
+    cout << "hey" << endl;
+    int h = k - 50 + 97 *g;
+    if (h < k && h > k && h < k)
+      cout << "h" << endl;
+  } 
+  for (int i = 0; i < 1; i++) {
+    cout << "h";
+  }
+}
+
+void K::func(int k, int j) 
+{
+  if (k == j || k == j || k != j || k == j) {
+    cout << "hey" << endl;
+    int h = k - 50 + 97 *j;
+    if (h < k && h > k && h < k)
+      cout << "h" << endl;
+  }
+  if ( k < 967*j)
+    cout << "fgdfg" << endl;
+  int k1;
+  while (k1 < 5 || k1 < 5) {
+    k1 = 5;
+  }
+}
 
 
