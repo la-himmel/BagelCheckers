@@ -18,6 +18,8 @@ using namespace std;
 class P {
 public:
   void DoSmth();
+  int x;
+  int y;
 };
 
 void P::DoSmth() 
@@ -45,6 +47,10 @@ void P::DoSmth()
   }
   if (a == b)
     cout << "you repeat yourself" << endl;
+
+  P *r = new P;
+  if (r->x + e == r->x - f)
+    cout << "df" << endl;
 }
 
 int main(int argc, char* argv[])
