@@ -32,8 +32,6 @@ private:
   static void ChangeLevel(int step); 
   static void UpdateDiagnostics();
 
-  static string GetText(CXCursor cursor);
-
   static string first_;
   static string second_;
 
@@ -74,7 +72,7 @@ enum CXChildVisitResult SameConditionsChecker::FindChildren(CXCursor cursor,
   }
   
   if (clang_getCursorKind(cursor) == CXCursor_BinaryOperator) {
-    string str = SameConditionsChecker::GetText(cursor);
+    string str = GetText(cursor);
 
     if (!SameConditionsChecker::gotOne_) {
       SameConditionsChecker::first_ = str; 
@@ -159,34 +157,5 @@ enum CXChildVisitResult SameConditionsChecker::Check(CXCursor cursor, CXCursor p
   } 
   return CXChildVisit_Continue;
 }
-
-string SameConditionsChecker::GetText(CXCursor cursor)
-{
-  CXFile file1;
-
-  unsigned line, column, offset, stOffs, endOffset;
-  clang_getSpellingLocation(clang_getCursorLocation(cursor), &file1, &line, &column, &offset);
-  
-  CXSourceLocation start = clang_getRangeStart(clang_getCursorExtent(cursor));
-  CXSourceLocation end = clang_getRangeEnd(clang_getCursorExtent(cursor));
-
-  clang_getSpellingLocation(start, &file1, &line, &column, &stOffs);
-  clang_getSpellingLocation(end, &file1, &line, &column, &endOffset);
-
-  FILE *file;
-  char *fn = (char *) clang_getCString(clang_getFileName(file1));
-  file = fopen(fn, "r");
-  fseek (file, offset, SEEK_SET);
-  char *buffer = (char*) malloc (sizeof(char)*(endOffset -stOffs));
-  fread (buffer, 1, (endOffset -stOffs), file);
-
-  fclose (file);
-
-  string str;
-  str.assign(buffer);
-  return str;
-}
-
-
 
 #endif

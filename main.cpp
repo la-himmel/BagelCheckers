@@ -10,7 +10,7 @@
 // #include "UnusedMembersChecker.h"
 // #include "AccessLevelChecker.h"
 // #include "DeadCodeChecker.h"
-// #include "SameConditionsChecker.h"
+#include "SameConditionsChecker.h"
 #include "ConditionChecker.h"
 
 using namespace std;
@@ -25,15 +25,23 @@ void P::DoSmth()
   int a = 5, b = 6, c = 7, d = 8, e = 7, f = 10;
 
   if (a == b) {
-    // if (a == b) {
-    //   c = 56;
-    // }
+    if (a == b) {
+      c = 56;
+    }
 
-    // if (a < a + 5)
+    if (a < a + 5)
       cout << "5" << endl;
-  // } else {
-  //   if (a == b)
-  //     cout << "same" << endl;    
+  } else {
+    if (a == b)
+      cout << "same" << endl;    
+    else {
+      if (e < f) {
+        d = 9;
+      }
+      if (e < f) {
+        d = 10;
+      }
+    }
   }
   if (a == b)
     cout << "you repeat yourself" << endl;
@@ -58,7 +66,7 @@ int main(int argc, char* argv[])
   CXClientData data;
   clang_visitChildren(cursor, ConditionChecker::Check, &data);
   // clang_visitChildren(cursor, UnusedMembersChecker::Check, &data);
-  // cout << ConditionChecker::GetDiagnostics() << endl;
+  cout << ConditionChecker::GetDiagnostics() << endl;
   
   //clang_visitChildren(cursor, DeadCodeChecker::Check, &data);
   

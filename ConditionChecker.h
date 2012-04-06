@@ -29,35 +29,36 @@ private:
   static enum CXChildVisitResult FindBinOperator(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
 
-  static void UpdateDiagnostics();
-
-  static string GetText(CXCursor cursor);
+  static enum CXChildVisitResult FindSameConds(CXCursor cursor,
+    CXCursor parent, CXClientData client_data);
 
   static string parentOperator_;
+  static string lastCondition_;
 
   static bool divingInto_;
+  static bool embedded_;
 
   static int level_;
 
   static string diagnostics_;
+
+  static vector<string> conds_;
 };
 
 string ConditionChecker::diagnostics_ = "";
 
 string ConditionChecker::parentOperator_ = "";
+string ConditionChecker::lastCondition_ = "";
 
 bool ConditionChecker::divingInto_ = false;
+bool ConditionChecker::embedded_ = false;
 int ConditionChecker::level_ = 0;
+
+vector<string> ConditionChecker::conds_ = vector<string>();
 
 string ConditionChecker::GetDiagnostics() 
 {  
   return ConditionChecker::diagnostics_;
-}
-
-void ConditionChecker::UpdateDiagnostics()
-{
-  string str = "Condition '";
-  ConditionChecker::diagnostics_.append(str);
 }
 
 enum CXChildVisitResult ConditionChecker::FindBinOperator(CXCursor cursor,
@@ -68,14 +69,20 @@ enum CXChildVisitResult ConditionChecker::FindBinOperator(CXCursor cursor,
   }
   
   if (clang_getCursorKind(cursor) == CXCursor_BinaryOperator) {
-    cout << "bin operator" << GetText(cursor) << endl;
     if (ConditionChecker::divingInto_) {
       if (ConditionChecker::parentOperator_ == "") {
         parentOperator_ = GetText(cursor);
+        if (!embedded_) {
+          lastCondition_ = parentOperator_;
+          return CXChildVisit_Break;
+        }
       } else {
-        if (parentOperator_ == GetText(cursor))
-          cout << "***** Diagnostics ***** this condition '" << GetText(cursor) 
-               << "' is already there, are you sure?" << endl;
+        if (parentOperator_ == GetText(cursor)) {
+          string text = "This condition '";
+          text.append(GetText(cursor));
+          text.append("' is already there, are you sure?\n");
+          diagnostics_.append(text);
+        }
       } 
     }    
   } 
@@ -92,22 +99,27 @@ enum CXChildVisitResult ConditionChecker::FindStmtsContinually(CXCursor cursor,
 
   if ((clang_getCursorKind(cursor) == CXCursor_IfStmt) || 
     (clang_getCursorKind(cursor) == CXCursor_WhileStmt)) {
-    cout << "--------------------------------" << endl;
-    cout << "Found if or while stmt" << endl;
-    cout << ConditionChecker::GetText(cursor) << endl;
     ConditionChecker::divingInto_ = true;
-  
+
+    string lastCondition = lastCondition_;
+
     CXClientData data;
-    clang_visitChildren(cursor, ConditionChecker::FindBinOperator, &data); 
+    clang_visitChildren(cursor, ConditionChecker::FindBinOperator, &data);
+
+    if (lastCondition_ == lastCondition && lastCondition.size()) {
+      string text= "This condition '";
+      text.append(lastCondition);
+      text.append("' is the same as previous, are you sure?\n");
+      diagnostics_.append(text);
+    }
 
     ConditionChecker::parentOperator_ = "";
-    ConditionChecker::divingInto_ = true;
+    ConditionChecker::divingInto_ = false;
   
   } 
 
   return CXChildVisit_Continue;
 }
-
 
 enum CXChildVisitResult ConditionChecker::FindStmts(CXCursor cursor,
  CXCursor parent, CXClientData client_data) 
@@ -117,17 +129,14 @@ enum CXChildVisitResult ConditionChecker::FindStmts(CXCursor cursor,
   }
 
   if ((clang_getCursorKind(cursor) == CXCursor_IfStmt) || 
-    (clang_getCursorKind(cursor) == CXCursor_WhileStmt)) {
-  
-    CXClientData data;
-    clang_visitChildren(cursor, ConditionChecker::FindStmtsContinually, &data); 
-  
-  } 
-  if (clang_getCursorKind(cursor) == CXCursor_CompoundStmt) {
+    (clang_getCursorKind(cursor) == CXCursor_WhileStmt) || 
+    (clang_getCursorKind(cursor) == CXCursor_CompoundStmt)) {
+
+    lastCondition_ = "";
+
     CXClientData data;
     clang_visitChildren(cursor, ConditionChecker::FindStmtsContinually, &data); 
   }
-
   return CXChildVisit_Recurse;
 }
 
@@ -139,39 +148,16 @@ enum CXChildVisitResult ConditionChecker::Check(CXCursor cursor, CXCursor parent
   }
   if ((clang_getCursorKind(cursor) == CXCursor_CXXMethod) || 
     (clang_getCursorKind(cursor) == CXCursor_FunctionDecl)) {
+
     CXClientData data;
+    embedded_ = true;
+    clang_visitChildren(cursor, ConditionChecker::FindStmts, &data); 
+
+    embedded_ = false;
     clang_visitChildren(cursor, ConditionChecker::FindStmts, &data); 
   } 
+ 
   return CXChildVisit_Continue;
 }
-
-string ConditionChecker::GetText(CXCursor cursor)
-{
-  CXFile file1;
-
-  unsigned line, column, offset, stOffs, endOffset;
-  clang_getSpellingLocation(clang_getCursorLocation(cursor), &file1, &line, &column, &offset);
-  
-  CXSourceLocation start = clang_getRangeStart(clang_getCursorExtent(cursor));
-  CXSourceLocation end = clang_getRangeEnd(clang_getCursorExtent(cursor));
-
-  clang_getSpellingLocation(start, &file1, &line, &column, &stOffs);
-  clang_getSpellingLocation(end, &file1, &line, &column, &endOffset);
-
-  FILE *file;
-  char *fn = (char *) clang_getCString(clang_getFileName(file1));
-  file = fopen(fn, "r");
-  fseek (file, offset, SEEK_SET);
-  char *buffer = (char*) malloc (sizeof(char)*(endOffset -stOffs));
-  fread (buffer, 1, (endOffset -stOffs), file);
-
-  fclose (file);
-
-  string str;
-  str.assign(buffer);
-  return str;
-}
-
-
 
 #endif
