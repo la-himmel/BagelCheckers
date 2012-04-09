@@ -201,12 +201,14 @@ enum CXChildVisitResult ConditionChecker::Check(CXCursor cursor,
   if ((clang_getCursorKind(cursor) == CXCursor_CXXMethod) || 
       (clang_getCursorKind(cursor) == CXCursor_FunctionDecl)) 
   {
-    CXClientData data;
-    embedded_ = true;
-    clang_visitChildren(cursor, ConditionChecker::FindStmts, &data); 
+    if (ToyNavigator::IsInteresting(cursor)) {
+      CXClientData data;
+      embedded_ = true;
+      clang_visitChildren(cursor, ConditionChecker::FindStmts, &data); 
 
-    embedded_ = false;
-    clang_visitChildren(cursor, ConditionChecker::FindStmts, &data); 
+      embedded_ = false;
+      clang_visitChildren(cursor, ConditionChecker::FindStmts, &data); 
+    }
   } 
  
   return CXChildVisit_Continue;

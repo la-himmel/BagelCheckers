@@ -1,5 +1,4 @@
 
-#include "NetworkResponseParser.h"
 #include <FWebJsonJsonParser.h>
 #include "Helpers/Typedefs.h"
 #include "Helpers/Functions.h"
@@ -8,6 +7,8 @@
 #include "DataManagement/DataItems/FullJobItem.h"
 #include "DataManagement/DataItems/UserData.h"
 #include "Resources/Strings.h"
+
+#include "NetworkResponseParser.h"
 
 using namespace Osp::Base;
 using namespace Osp::Base::Collection;

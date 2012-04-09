@@ -141,8 +141,8 @@ enum CXChildVisitResult SameConditionsChecker::FindBinOperator(CXCursor cursor,
   return CXChildVisit_Recurse;
 }
 
-enum CXChildVisitResult SameConditionsChecker::Check(CXCursor cursor, CXCursor parent, 
-    CXClientData client_data) 
+enum CXChildVisitResult SameConditionsChecker::Check(CXCursor cursor, 
+  CXCursor parent, CXClientData client_data) 
 {
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {    
     return CXChildVisit_Break;
@@ -150,8 +150,10 @@ enum CXChildVisitResult SameConditionsChecker::Check(CXCursor cursor, CXCursor p
   if ((clang_getCursorKind(cursor) == CXCursor_CXXMethod) || 
       (clang_getCursorKind(cursor) == CXCursor_FunctionDecl)) 
   {
-    CXClientData data;
-    clang_visitChildren(cursor, SameConditionsChecker::FindStmts, &data); 
+    if (ToyNavigator::IsInteresting(cursor)) {
+      CXClientData data;
+      clang_visitChildren(cursor, SameConditionsChecker::FindStmts, &data); 
+    }
   } 
   
   return CXChildVisit_Continue;

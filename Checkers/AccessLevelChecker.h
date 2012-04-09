@@ -153,13 +153,15 @@ enum CXChildVisitResult AccessLevelChecker::Check(CXCursor cursor,
   }
 
   if (clang_getCursorKind(cursor) == CXCursor_ClassDecl) {
-    AccessLevelChecker::fileSection_ = SECTION_CLASS;
-    AccessLevelChecker::inherited_ = false;
-      AccessLevelChecker::subclass_ = 
-          clang_getCString(clang_getCursorSpelling(cursor));
-  
-    CXClientData data;
-    clang_visitChildren(cursor, AccessLevelChecker::FindClassName, &data); 
+    if (ToyNavigator::IsInteresting(cursor)) {
+      AccessLevelChecker::fileSection_ = SECTION_CLASS;
+      AccessLevelChecker::inherited_ = false;
+        AccessLevelChecker::subclass_ = 
+            clang_getCString(clang_getCursorSpelling(cursor));
+    
+      CXClientData data;
+      clang_visitChildren(cursor, AccessLevelChecker::FindClassName, &data); 
+    }
   }
   return CXChildVisit_Continue;
 }

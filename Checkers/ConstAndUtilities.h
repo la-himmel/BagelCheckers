@@ -11,6 +11,48 @@ using namespace std;
 enum AccessSection { ACCESS_PRIVATE, ACCESS_PUBLIC, ACCESS_PROTECTED, ACCESS_OTHER };
 enum FileSection { SECTION_METHOD, SECTION_CLASS, SECTION_OTHER };
 
+class ToyNavigator
+{
+public:
+  static bool IsInteresting(CXCursor);
+  static void SetFile(string);
+
+  static string source_;
+  static string header_;
+};
+
+string ToyNavigator::source_ = "";
+string ToyNavigator::header_ = "";
+
+void ToyNavigator::SetFile(string str)
+{
+  size_t found = str.find_last_of("/\\");
+  source_ = str.substr(found +1);
+  found = source_.find("cpp");
+  if (found != string::npos) {
+    header_ = source_.substr(0, source_.size() -3) + "h";
+  }  
+  // cout << source_ << " and " << header_ << endl;
+}
+
+bool ToyNavigator::IsInteresting(CXCursor cursor)
+{  
+  CXFile file1;
+  unsigned line, column, offset;
+  clang_getSpellingLocation(clang_getCursorLocation(cursor), 
+    &file1, &line, &column, &offset);
+
+  string filename = clang_getCString(clang_getFileName(file1));
+  if ((filename.find(source_) != string::npos) || 
+      (filename.find(source_) != string::npos)) 
+  {
+    // cout << "Yes! I'm from " << clang_getCString(clang_getFileName(file1)) 
+    //    << " it's " << source_ << endl;
+    return true;    
+  }
+  return false;
+}
+
 void PrintSpelling(CXCursor cursor)
 {
   cout << clang_getCString(clang_getCursorSpelling(cursor)) << endl;

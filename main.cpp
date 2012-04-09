@@ -13,13 +13,18 @@
 #include "Checkers/SameConditionsChecker.h"
 #include "Checkers/ConditionChecker.h"
 
+#include "Checkers/ConstAndUtilities.h"
+
 using namespace std;
 
 int main(int argc, char* argv[])
 {  
-  CXIndex index = clang_createIndex(0, 0);    
+  CXIndex index = clang_createIndex(1, 0);    
   CXTranslationUnit tUnit = clang_parseTranslationUnit(index, 0, argv, 
       argc, 0, 0, CXTranslationUnit_None);
+  string str = argv[1];
+
+  ToyNavigator::SetFile(str);
 /*
   for (int i = 0, n = clang_getNumDiagnostics(tUnit); i != n; ++i) {
     CXDiagnostic diag = clang_getDiagnostic(tUnit, i);
@@ -35,26 +40,26 @@ int main(int argc, char* argv[])
 
   string diag;
 
-  clang_visitChildren(cursor, ConditionChecker::Check, &data);
+  // clang_visitChildren(cursor, ConditionChecker::Check, &data);
   // diag.append(ConditionChecker::GetDiagnostics());
-  if (diag.size()) {
-    diag.append("\n");  
-  }  
+  // if (diag.size()) {
+  //   diag.append("\n");  
+  // }  
   
   clang_visitChildren(cursor, DeadCodeChecker::Check, &data);
-  // diag.append(DeadCodeChecker::GetDiagnostics());
+  diag.append(DeadCodeChecker::GetDiagnostics());
   if (diag.size()) {
     diag.append("\n");  
   }
 
-  clang_visitChildren(cursor, SameConditionsChecker::Check, &data);
+  // clang_visitChildren(cursor, SameConditionsChecker::Check, &data);
   // diag.append(SameConditionsChecker::GetDiagnostics());
-  if (diag.size()) {
-    diag.append("\n");  
-  }
+  // if (diag.size()) {
+  //   diag.append("\n");  
+  // }
   
   clang_visitChildren(cursor, AccessLevelChecker::Check, &data);
-  // diag.append(AccessLevelChecker::GetDiagnostics());
+  diag.append(AccessLevelChecker::GetDiagnostics());
   if (diag.size()) {
     diag.append("\n");  
   }
@@ -65,7 +70,7 @@ int main(int argc, char* argv[])
     diag.append("\n");  
     cout << diag << endl;
   } else {
-    cout << "No diagnostics available " << endl;
+    cout << "No diagnostics available for " << str << endl;
   }
   
 

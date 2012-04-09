@@ -95,8 +95,10 @@ enum CXChildVisitResult DeadCodeChecker::Check(CXCursor cursor,
   }
     
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
-    CXClientData data;
-    clang_visitChildren(cursor, DeadCodeChecker::VisitChildren, &data); 
+    if (ToyNavigator::IsInteresting(cursor)) {
+      CXClientData data;
+      clang_visitChildren(cursor, DeadCodeChecker::VisitChildren, &data); 
+    }
   }
 
   return CXChildVisit_Continue;
