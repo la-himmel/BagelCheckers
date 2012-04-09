@@ -34,13 +34,14 @@ string GetText(CXCursor cursor)
   char *fn = (char *) clang_getCString(clang_getFileName(file1));
   file = fopen(fn, "r");
   fseek (file, offset, SEEK_SET);
-  char *buffer = (char*) malloc (sizeof(char)*(endOffset -stOffs));
-  fread (buffer, 1, (endOffset -stOffs), file);
+  char *buffer = new char[endOffset -stOffs];
 
+  fread (buffer, 1, (endOffset -stOffs), file);
   fclose (file);
 
   string str;
   str.assign(buffer);
+  delete[] buffer;
   return str;
 }
 

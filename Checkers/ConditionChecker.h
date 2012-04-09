@@ -12,7 +12,7 @@
 
 using namespace std;
 
-//Todo: fix for members; fix trash in the end of line
+//Todo: fix trash in the end of line
 class ConditionChecker 
 {
 public:
@@ -53,7 +53,6 @@ private:
 };
 
 string ConditionChecker::diagnostics_ = "";
-
 string ConditionChecker::parentOperator_ = "";
 string ConditionChecker::lastCondition_ = "";
 string ConditionChecker::lastBinaryExpr_ = "";
@@ -87,8 +86,8 @@ enum CXChildVisitResult ConditionChecker::FindReferences(CXCursor cursor,
     if (lastMember_.size()) {
       ref.append(lastMember_);
       lastMember_ = "";
-      // cout << "Member: " << ref << endl;
     }
+
     if (std::find(vars_.begin(), vars_.end(), ref) != vars_.end()) {
       string text = "This condition '";
       text.append(lastBinaryExpr_);
@@ -116,8 +115,6 @@ enum CXChildVisitResult ConditionChecker::FindBinOperator(CXCursor cursor,
     if (GetText(cursor).find(" = ") == string::npos) {
       lastBinaryExpr_ = GetText(cursor);
       vars_.clear();
-
-      // cout << "binary: " << GetText(cursor) << endl;
 
       CXClientData data;
       clang_visitChildren(cursor, ConditionChecker::FindReferences, &data);
@@ -152,7 +149,8 @@ enum CXChildVisitResult ConditionChecker::FindStmtsContinually(CXCursor cursor,
   }
 
   if ((clang_getCursorKind(cursor) == CXCursor_IfStmt) || 
-    (clang_getCursorKind(cursor) == CXCursor_WhileStmt)) {
+      (clang_getCursorKind(cursor) == CXCursor_WhileStmt)) 
+  {
     ConditionChecker::divingInto_ = true;
     string lastCondition = lastCondition_;
 
@@ -167,8 +165,7 @@ enum CXChildVisitResult ConditionChecker::FindStmtsContinually(CXCursor cursor,
     }
 
     ConditionChecker::parentOperator_ = "";
-    ConditionChecker::divingInto_ = false;
-  
+    ConditionChecker::divingInto_ = false;  
   } 
 
   return CXChildVisit_Continue;
@@ -182,26 +179,28 @@ enum CXChildVisitResult ConditionChecker::FindStmts(CXCursor cursor,
   }
 
   if ((clang_getCursorKind(cursor) == CXCursor_IfStmt) || 
-    (clang_getCursorKind(cursor) == CXCursor_WhileStmt) || 
-    (clang_getCursorKind(cursor) == CXCursor_CompoundStmt)) {
-
+      (clang_getCursorKind(cursor) == CXCursor_WhileStmt) || 
+      (clang_getCursorKind(cursor) == CXCursor_CompoundStmt)) 
+  {
     lastCondition_ = "";
 
     CXClientData data;
     clang_visitChildren(cursor, ConditionChecker::FindStmtsContinually, &data); 
   }
+
   return CXChildVisit_Recurse;
 }
 
-enum CXChildVisitResult ConditionChecker::Check(CXCursor cursor, CXCursor parent, 
-    CXClientData client_data) 
+enum CXChildVisitResult ConditionChecker::Check(CXCursor cursor, 
+  CXCursor parent, CXClientData client_data) 
 {
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {    
     return CXChildVisit_Break;
   }
-  if ((clang_getCursorKind(cursor) == CXCursor_CXXMethod) || 
-    (clang_getCursorKind(cursor) == CXCursor_FunctionDecl)) {
 
+  if ((clang_getCursorKind(cursor) == CXCursor_CXXMethod) || 
+      (clang_getCursorKind(cursor) == CXCursor_FunctionDecl)) 
+  {
     CXClientData data;
     embedded_ = true;
     clang_visitChildren(cursor, ConditionChecker::FindStmts, &data); 

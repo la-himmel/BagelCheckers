@@ -22,9 +22,6 @@ public:
 private:
   static enum CXChildVisitResult FindPrivateItems(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
-  static enum CXChildVisitResult FindClassName(CXCursor cursor,
-    CXCursor parent, CXClientData client_data);
-
   static enum CXChildVisitResult FindRefsAndCalls(CXCursor cursor,
     CXCursor parent, CXClientData client_data); 
 
@@ -37,8 +34,6 @@ private:
 
   static vector<string> methods_;
   static map<string, int> fields_;
-
-  int myDummy_;
 };
 
 string UnusedMembersChecker::currentClass_ = "";
@@ -59,13 +54,10 @@ enum CXChildVisitResult UnusedMembersChecker::FindRefsAndCalls(CXCursor cursor,
  CXCursor parent, CXClientData client_data) 
 {
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
-    cout << "break\n" ;
     return CXChildVisit_Break;
   }
   
   if (clang_getCursorKind(cursor) == CXCursor_MemberRefExpr) {
-    PrintSpelling(cursor);
-
     string entry = GetEntry(cursor);
     vector<string>::iterator it = std::find(methods_.begin(), 
       methods_.end(), entry);
@@ -82,8 +74,7 @@ enum CXChildVisitResult UnusedMembersChecker::FindRefsAndCalls(CXCursor cursor,
           fields_.erase(it);
       }      
     }
-  }
-   
+  }   
   return CXChildVisit_Recurse;
 }
 
@@ -94,36 +85,20 @@ string UnusedMembersChecker::GetDiagnostics()
     it != UnusedMembersChecker::fields_.end(); ++it) {
       if (it->second == 0) {
         diag.append(it->first);
-        diag.append(" field is UnusedMembersChecker.\n\n");
+        diag.append(" field is unused.\n");
       } else if (it->second == 1) {
         diag.append(it->first);
-        diag.append(" can be a local variable.\n\n");
+        diag.append(" can be a local variable.\n");
       }
   } 
+
   for (vector<string>::iterator it = methods_.begin(); 
       it != methods_.end(); ++it) {
     diag.append(*it);
-    diag.append(" method is UnusedMembersChecker.\n\n");
+    diag.append(" method is unused.\n");
   }
-  return diag;
-}
 
-enum CXChildVisitResult UnusedMembersChecker::FindClassName(CXCursor cursor,
- CXCursor parent, CXClientData client_data) 
-{
-  if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
-    cout << "break\n" ;
-    return CXChildVisit_Break;
-  }
-  
-  if (clang_getCursorKind(cursor) == CXCursor_TypeRef) {
-    PrintSpelling(cursor);
-    
-  }
-  if (clang_getCursorKind(cursor) == CXCursor_DeclStmt) {
-    PrintSpelling(cursor);
-  } 
-  return CXChildVisit_Recurse;
+  return diag;
 }
 
 enum CXChildVisitResult UnusedMembersChecker::FindPrivateItems(CXCursor cursor,
@@ -132,60 +107,53 @@ enum CXChildVisitResult UnusedMembersChecker::FindPrivateItems(CXCursor cursor,
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
     return CXChildVisit_Break;
   }
+
   if (clang_getCursorKind(cursor) == CXCursor_CXXAccessSpecifier) {
     if (clang_getCXXAccessSpecifier(cursor) == CX_CXXPrivate) { 
       UnusedMembersChecker::accessSection_ = ACCESS_PRIVATE;
     } else {
       UnusedMembersChecker::accessSection_ = ACCESS_OTHER;
     }
-    PrintSpelling(cursor);
   }
+
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
-    PrintSpelling(cursor);
+    // PrintSpelling(cursor);
     if (UnusedMembersChecker::accessSection_ == ACCESS_PRIVATE) {
       string entry = GetEntry(cursor);
       UnusedMembersChecker::methods_.push_back(entry);
     }
   }
+
   if (clang_getCursorKind(cursor) == CXCursor_FieldDecl) {
-    PrintSpelling(cursor);
     if (UnusedMembersChecker::accessSection_ == ACCESS_PRIVATE) {
       string entry = GetEntry(cursor);
-
       map<string, int>::iterator it = fields_.find(entry);
 
       if (it == UnusedMembersChecker::fields_.end()) {
         UnusedMembersChecker::fields_.insert(pair<string, int>(entry, 0));
       }
-
     }
   }
   return CXChildVisit_Continue;
 }
 
-enum CXChildVisitResult UnusedMembersChecker::Check(CXCursor cursor, CXCursor parent, 
-    CXClientData client_data) 
+enum CXChildVisitResult UnusedMembersChecker::Check(CXCursor cursor, 
+  CXCursor parent, CXClientData client_data) 
 {
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
     return CXChildVisit_Break;
   }
     
   if (clang_getCursorKind(cursor) == CXCursor_ClassDecl) {
-    PrintSpelling(cursor);
-    UnusedMembersChecker::currentClass_ = clang_getCString(clang_getCursorSpelling(cursor));
+    UnusedMembersChecker::currentClass_ = 
+      clang_getCString(clang_getCursorSpelling(cursor));
     UnusedMembersChecker::fileSection_ = SECTION_CLASS;
     CXClientData data;
     clang_visitChildren(cursor, UnusedMembersChecker::FindPrivateItems, &data); 
   }
-
-  if (clang_getCursorKind(cursor) == CXCursor_CallExpr) {
-    PrintSpelling(cursor);
-  }
+  
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
-    PrintSpelling(cursor);
-
     CXClientData data;
-    clang_visitChildren(cursor, UnusedMembersChecker::FindClassName, &data);
     clang_visitChildren(cursor, UnusedMembersChecker::FindRefsAndCalls, &data); 
   }
 

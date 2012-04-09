@@ -81,13 +81,11 @@ enum CXChildVisitResult SameConditionsChecker::FindChildren(CXCursor cursor,
     } else {
       if (str == SameConditionsChecker::first_ || 
         SameConditionsChecker::first_.find(str) != string::npos) {
-        // cout << "first contains or equals to second" << endl;
-        
         SameConditionsChecker::second_ = str;
         SameConditionsChecker::UpdateDiagnostics();
       }
 
-      SameConditionsChecker::ChangeLevel(-1);     
+      SameConditionsChecker::ChangeLevel(-1);    
 
       SameConditionsChecker::gotOne_ = false;
       SameConditionsChecker::first_ = "";
@@ -150,11 +148,12 @@ enum CXChildVisitResult SameConditionsChecker::Check(CXCursor cursor, CXCursor p
     return CXChildVisit_Break;
   }
   if ((clang_getCursorKind(cursor) == CXCursor_CXXMethod) || 
-    (clang_getCursorKind(cursor) == CXCursor_FunctionDecl)) {
-
+      (clang_getCursorKind(cursor) == CXCursor_FunctionDecl)) 
+  {
     CXClientData data;
     clang_visitChildren(cursor, SameConditionsChecker::FindStmts, &data); 
   } 
+  
   return CXChildVisit_Continue;
 }
 

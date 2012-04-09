@@ -89,13 +89,15 @@ enum CXChildVisitResult AccessLevelChecker::FindClassName(CXCursor cursor,
       }      
     }
   } 
+
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
     if (searching_) {
       if (clang_equalCursors(cursor, AccessLevelChecker::overriding_)) {
         if (accessSectionBase_ == ACCESS_PRIVATE &&
           accessSection_ != ACCESS_PRIVATE) {
 
-          string access = accessSection_ == ACCESS_PUBLIC ? "public" : "protected";
+          string access = accessSection_ == ACCESS_PUBLIC ? "public" : 
+              "protected";
 
           string diag = "Method '";
           diag.append(AccessLevelChecker::method_);
@@ -143,8 +145,8 @@ enum CXChildVisitResult AccessLevelChecker::FindClassName(CXCursor cursor,
   return CXChildVisit_Recurse;
 }
 
-enum CXChildVisitResult AccessLevelChecker::Check(CXCursor cursor, CXCursor parent, 
-    CXClientData client_data) 
+enum CXChildVisitResult AccessLevelChecker::Check(CXCursor cursor, 
+  CXCursor parent, CXClientData client_data) 
 {
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {    
     return CXChildVisit_Break;
@@ -153,7 +155,8 @@ enum CXChildVisitResult AccessLevelChecker::Check(CXCursor cursor, CXCursor pare
   if (clang_getCursorKind(cursor) == CXCursor_ClassDecl) {
     AccessLevelChecker::fileSection_ = SECTION_CLASS;
     AccessLevelChecker::inherited_ = false;
-      AccessLevelChecker::subclass_ = clang_getCString(clang_getCursorSpelling(cursor));
+      AccessLevelChecker::subclass_ = 
+          clang_getCString(clang_getCursorSpelling(cursor));
   
     CXClientData data;
     clang_visitChildren(cursor, AccessLevelChecker::FindClassName, &data); 
@@ -176,6 +179,5 @@ void AccessLevelChecker::Reset()
   AccessLevelChecker::subclass_ = "";
   AccessLevelChecker::method_ = "";
 }
-
 
 #endif

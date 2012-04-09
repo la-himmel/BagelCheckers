@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <sstream>
 
 #include <algorithm>
 
@@ -21,11 +22,13 @@ private:
     CXCursor parent, CXClientData client_data); 
 
   static bool foundReturnStmt_;
+  static string diag_;
 
   static vector<string> methods_;
 };
 
 vector<string> DeadCodeChecker::methods_ = vector<string>();
+string DeadCodeChecker::diag_ = "";
 
 bool DeadCodeChecker::foundReturnStmt_ = false;
 
@@ -40,33 +43,33 @@ enum CXChildVisitResult DeadCodeChecker::FindDeadCode(CXCursor cursor,
   if (clang_getCursorKind(cursor) == CXCursor_ReturnStmt) {
     DeadCodeChecker::foundReturnStmt_ = true;
   } else if (DeadCodeChecker::foundReturnStmt_) {
-    cout << "( Found ) dead code: " << endl;
-
+    
     CXSourceLocation location = clang_getCursorLocation(cursor);
-    unsigned *line = new unsigned;
-    unsigned *column = new unsigned;
-    unsigned *offset = new unsigned;
-    CXFile *file = new CXFile; 
+    unsigned line;
+    unsigned column;
+    unsigned offset;
+    CXFile file; 
 
-    clang_getSpellingLocation(location, file, line, column, offset);
+    clang_getSpellingLocation(location, &file, &line, &column, &offset);
     if (file) {
-      //TODO: fix a problem with return string and add diagnostics
       CXString filename = clang_getFileName(file);
-      cout << clang_getCString(filename) << endl;
-      cout << "line: " << *line << "column: " << *column << endl;
+      stringstream ss;
+      ss << "Dead code detected! " << clang_getCString(filename)
+           << " ln: " << line << " col: " << column << endl;
+      string str = ss.str();
 
       clang_disposeString(filename);
 
+      DeadCodeChecker::diag_.append(str);
     } 
   } 
+
   return CXChildVisit_Continue;
 }
 
 string DeadCodeChecker::GetDiagnostics() 
 {
-  string diag;
-
-  return diag;
+  return diag_;
 }
 
 enum CXChildVisitResult DeadCodeChecker::VisitChildren(CXCursor cursor,
@@ -84,16 +87,14 @@ enum CXChildVisitResult DeadCodeChecker::VisitChildren(CXCursor cursor,
   return CXChildVisit_Recurse;
 }
 
-enum CXChildVisitResult DeadCodeChecker::Check(CXCursor cursor, CXCursor parent, 
-    CXClientData client_data) 
+enum CXChildVisitResult DeadCodeChecker::Check(CXCursor cursor, 
+  CXCursor parent, CXClientData client_data) 
 {
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
     return CXChildVisit_Break;
   }
     
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
-    // string str = clang_getCString(clang_getCursorSpelling(cursor));
-
     CXClientData data;
     clang_visitChildren(cursor, DeadCodeChecker::VisitChildren, &data); 
   }
