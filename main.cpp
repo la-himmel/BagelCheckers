@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
   CXIndex index = clang_createIndex(0, 0);    
   CXTranslationUnit tUnit = clang_parseTranslationUnit(index, 0, argv, 
       argc, 0, 0, CXTranslationUnit_None);
-     /* 
+/*
   for (int i = 0, n = clang_getNumDiagnostics(tUnit); i != n; ++i) {
     CXDiagnostic diag = clang_getDiagnostic(tUnit, i);
     CXString str = clang_formatDiagnostic(diag, 
@@ -33,21 +33,41 @@ int main(int argc, char* argv[])
   CXCursor cursor = clang_getTranslationUnitCursor(tUnit);
   CXClientData data;
 
+  string diag;
+
   clang_visitChildren(cursor, ConditionChecker::Check, &data);
-  cout << ConditionChecker::GetDiagnostics() << endl;
+  // diag.append(ConditionChecker::GetDiagnostics());
+  if (diag.size()) {
+    diag.append("\n");  
+  }  
   
   clang_visitChildren(cursor, DeadCodeChecker::Check, &data);
-  cout << DeadCodeChecker::GetDiagnostics() << endl;
+  // diag.append(DeadCodeChecker::GetDiagnostics());
+  if (diag.size()) {
+    diag.append("\n");  
+  }
 
   clang_visitChildren(cursor, SameConditionsChecker::Check, &data);
-  cout << SameConditionsChecker::GetDiagnostics() << endl;
-
-
+  // diag.append(SameConditionsChecker::GetDiagnostics());
+  if (diag.size()) {
+    diag.append("\n");  
+  }
+  
   clang_visitChildren(cursor, AccessLevelChecker::Check, &data);
-  cout << AccessLevelChecker::GetDiagnostics() << endl;
+  // diag.append(AccessLevelChecker::GetDiagnostics());
+  if (diag.size()) {
+    diag.append("\n");  
+  }
 
   clang_visitChildren(cursor, UnusedMembersChecker::Check, &data);
-  cout << UnusedMembersChecker::GetDiagnostics() << endl;
+  diag.append(UnusedMembersChecker::GetDiagnostics());
+  if (diag.size()) {
+    diag.append("\n");  
+    cout << diag << endl;
+  } else {
+    cout << "No diagnostics available " << endl;
+  }
+  
 
   clang_disposeTranslationUnit(tUnit);
   clang_disposeIndex(index);

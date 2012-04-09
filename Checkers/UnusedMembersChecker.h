@@ -59,6 +59,9 @@ enum CXChildVisitResult UnusedMembersChecker::FindRefsAndCalls(CXCursor cursor,
   
   if (clang_getCursorKind(cursor) == CXCursor_MemberRefExpr) {
     string entry = GetEntry(cursor);
+    cout << "Found MEMBER reference: -------- ";
+    PrintSpelling(cursor);
+
     vector<string>::iterator it = std::find(methods_.begin(), 
       methods_.end(), entry);
 
@@ -140,6 +143,7 @@ enum CXChildVisitResult UnusedMembersChecker::FindPrivateItems(CXCursor cursor,
 enum CXChildVisitResult UnusedMembersChecker::Check(CXCursor cursor, 
   CXCursor parent, CXClientData client_data) 
 {
+  PrintSpelling(cursor);
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
     return CXChildVisit_Break;
   }
