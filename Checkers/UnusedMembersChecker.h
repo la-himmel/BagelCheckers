@@ -19,6 +19,7 @@ public:
   static enum CXChildVisitResult Check(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
   static string GetDiagnostics();
+  static string GetStatistics();
 private:
   static enum CXChildVisitResult FindPrivateItems(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
@@ -34,11 +35,19 @@ private:
 
   static map<string, int> methods_;
   static map<string, int> fields_;
+
+  static int localFields_;
+  static int unusedMethods_;
+  static int unusedVars_;
 };
 
 string UnusedMembersChecker::currentClass_ = "";
 FileSection UnusedMembersChecker::fileSection_ = SECTION_OTHER;
 AccessSection UnusedMembersChecker::accessSection_ = ACCESS_OTHER;
+
+int UnusedMembersChecker::localFields_ = 0;
+int UnusedMembersChecker::unusedVars_ = 0;
+int UnusedMembersChecker::unusedMethods_ = 0;
 
 map<string, int> UnusedMembersChecker::methods_ = map<string, int>();
 map<string, int> UnusedMembersChecker::fields_ = map<string, int>();
@@ -82,6 +91,13 @@ enum CXChildVisitResult UnusedMembersChecker::FindRefsAndCalls(CXCursor cursor,
   return CXChildVisit_Recurse;
 }
 
+string UnusedMembersChecker::GetStatistics()
+{
+  string stat = "UV: " + intToString(unusedVars_) + " UM: " 
+    + intToString(unusedMethods_) + " LV: " + intToString(localFields_) + "\n";
+  return stat;
+}
+
 string UnusedMembersChecker::GetDiagnostics() 
 {
   string diag;
@@ -90,9 +106,11 @@ string UnusedMembersChecker::GetDiagnostics()
       if (it->second == 0) {
         diag.append(it->first);
         diag.append(" field is unused.\n");
+        unusedVars_++;
       } else if (it->second == 1) {
         diag.append(it->first);
         diag.append(" can be a local variable.\n");
+        localFields_++;
       }
   } 
 
@@ -102,6 +120,7 @@ string UnusedMembersChecker::GetDiagnostics()
     if (it->second == 0) {
       diag.append(it->first);
       diag.append(" method is unused.\n");
+      unusedMethods_++;
     }
   }
 

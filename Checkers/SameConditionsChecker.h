@@ -18,6 +18,7 @@ public:
   static enum CXChildVisitResult Check(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
   static string GetDiagnostics();
+  static string GetStatistics();
 
 private:
   static enum CXChildVisitResult FindStmts(CXCursor cursor,
@@ -39,6 +40,8 @@ private:
 
   static int level_;
 
+  static int count_;
+
   static string diagnostics_;
 };
 
@@ -46,12 +49,20 @@ string SameConditionsChecker::first_ = "";
 string SameConditionsChecker::second_ = "";
 string SameConditionsChecker::diagnostics_ = "";
 
+int SameConditionsChecker::count_ = 0;
+
 bool SameConditionsChecker::gotOne_ = true;
 int SameConditionsChecker::level_ = 0;
 
 string SameConditionsChecker::GetDiagnostics() 
 {  
   return SameConditionsChecker::diagnostics_;
+}
+
+string SameConditionsChecker::GetStatistics()
+{
+  string stat = "NC: " + intToString(count_) + "\n";
+  return stat;  
 }
 
 void SameConditionsChecker::UpdateDiagnostics()
@@ -62,6 +73,7 @@ void SameConditionsChecker::UpdateDiagnostics()
   str.append(SameConditionsChecker::second_);
   str.append("'. Are you sure?\n");
   SameConditionsChecker::diagnostics_.append(str);
+  count_++;
 }
 
 enum CXChildVisitResult SameConditionsChecker::FindChildren(CXCursor cursor,

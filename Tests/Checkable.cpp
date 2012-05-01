@@ -10,6 +10,11 @@ int Checker::Smth()
   return 0;
 }
 
+class KL {
+private:
+  int x;
+};
+
 void Checker::AnotherUnusefulMethod() 
 {
   int k = 6;

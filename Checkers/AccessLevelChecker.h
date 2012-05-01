@@ -16,6 +16,7 @@ public:
   static enum CXChildVisitResult Check(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
   static string GetDiagnostics();
+  static string GetStatistics();
 
 private:
   static enum CXChildVisitResult FindClassName(CXCursor cursor,
@@ -37,8 +38,12 @@ private:
   static string subclass_;
   static string method_;
 
+  static int count_;
+
   static string diagnostics_;
 };
+
+int AccessLevelChecker::count_ = 0;
 
 AccessSection AccessLevelChecker::accessSection_ = ACCESS_OTHER;
 AccessSection AccessLevelChecker::accessSectionBase_ = ACCESS_OTHER;
@@ -57,6 +62,12 @@ string AccessLevelChecker::diagnostics_ = "";
 string AccessLevelChecker::GetDiagnostics() 
 {  
   return AccessLevelChecker::diagnostics_;
+}
+
+string AccessLevelChecker::GetStatistics() 
+{  
+  string stat = "AL: " + intToString(count_) + "\n";
+  return stat;  
 }
 
 enum CXChildVisitResult AccessLevelChecker::FindClassName(CXCursor cursor,
@@ -108,6 +119,8 @@ enum CXChildVisitResult AccessLevelChecker::FindClassName(CXCursor cursor,
           diag.append(" in subclass '");
           diag.append(AccessLevelChecker::subclass_);
           diag.append("'. Are you sure you want to do this?\n");
+
+          count_++;
 
           AccessLevelChecker::diagnostics_.append(diag);
           Reset();

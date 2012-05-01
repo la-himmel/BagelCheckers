@@ -4,6 +4,7 @@
 #include "Index.h"
 
 #include <iostream>
+#include <sstream>
 #include <stdio.h>
 
 using namespace std;
@@ -44,7 +45,7 @@ bool ToyNavigator::IsInteresting(CXCursor cursor)
 
   string filename = clang_getCString(clang_getFileName(file1));
   if ((filename.find(source_) != string::npos) || 
-      (filename.find(source_) != string::npos)) 
+      (filename.find(header_) != string::npos)) 
   {
     // cout << "Yes! I'm from " << clang_getCString(clang_getFileName(file1)) 
     //    << " it's " << source_ << endl;
@@ -57,6 +58,13 @@ void PrintSpelling(CXCursor cursor)
 {
   cout << clang_getCString(clang_getCursorSpelling(cursor)) << endl;
   // cout << clang_getCString(clang_getCursorDisplayName(cursor)) << endl;
+}
+
+string intToString(int x)
+{
+  stringstream ss;
+  ss << x;
+  return ss.str();
 }
 
 string GetText(CXCursor cursor)
