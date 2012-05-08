@@ -52,6 +52,7 @@ int main(int argc, char* argv[])
 
   // clang_visitChildren(cursor, ConditionChecker::Check, &data);
   // diag.append(FormatDiag(ConditionChecker::GetDiagnostics()));
+  // diag.append(ConditionChecker::GetStatistics());
       
   // clang_visitChildren(cursor, DeadCodeChecker::Check, &data);
   // diag.append(FormatDiag(DeadCodeChecker::GetDiagnostics()));
@@ -70,12 +71,10 @@ int main(int argc, char* argv[])
 
   if (diag.size()) {
     diag.append("\n");  
-    cout << "------------ Diagnostics for " << str << ": ------------ \n" << diag << endl;
+    cout << diag << endl;
   } /*else {
     cout << "No diagnostics available for " << str << endl;
   }*/
-    cout << "meow meow" << endl;
-  
 
   clang_disposeTranslationUnit(tUnit);
   clang_disposeIndex(index);

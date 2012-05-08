@@ -15,67 +15,73 @@ private:
   int x;
 };
 
-void Checker::AnotherUnusefulMethod() 
-{
-  int k = 6;
-  int l = k;
-  l = 6;
-  l = 10;
+// void Checker::AnotherUnusefulMethod() 
+// {
+//   int k = 6;
+//   int l = k;
+//   l = 6;
+//   l = 10;
 
-  if (notDummy_ > 55 - notDummy_) {
-    return;
-    notDummy_ = 56;
-  }
-  return;
-  notDummy_ = 45;
-}
+//   if (notDummy_ > 55 - notDummy_) {
+//     return;
+//     notDummy_ = 56;
+//   }
+//   return;
+//   notDummy_ = 45;
+// }
 
 void Checker::UsefulMethod() 
 {
-  notDummyButNotEffective_ = 4096;
-  if (1) {
-    notDummy_ = 15;  
-  }
+  // notDummyButNotEffective_ = 4096;
+  // if (1) {
+  //   notDummy_ = 15;  
+  // }
   int x = notDummy_ > 5 ? notDummyButNotEffective_ : notDummyButNotEffective_;
-  cout << x << endl;
+  // cout << x << endl;
 
-  if (x == 5) {
+  if (x == 5 || x < 10 *x) {
     cout << "5" << endl;
-    if (x == 5)
+    if (x == 5 || x > 54)
+      cout << "4";
+    if (x == 7 || x > 54)
+      cout << "4";
+    if (x == 5 || x > 54)
+      cout << "4";
+    if (x == 5 || x > 54)
       cout << "4";
   }
-  if (x == 5)
+  if (x == 5 || x < 10 *x)
     cout << "r";
   else {
     if (x == 5)
       cout << "78";
   }
   
-  UsefulMethod();
+  // UsefulMethod();
   return;
-  UsefulMethod();
+  // UsefulMethod();
 }
 
-void Checker::MeowMeow()
-{
-  notDummy_ = 2;
+// void Checker::MeowMeow()
+// {
+//   notDummy_ = 2;
 
-}
+// }
 
-void A::func() 
-{ 
-  cout << "A, private" << endl; 
-}
+// void A::func() 
+// { 
+//   cout << "A, private" << endl; 
+// }
 
-void B::func() 
-{ 
-  cout << "B, public" << endl; 
-}
+// void B::func() 
+// { 
+//   cout << "B, public" << endl; 
+// }
 
-void C::func() 
-{ 
-  cout << "xc" << endl; 
-}
+// void C::func() 
+// { 
+//   cout << "xc" << endl; 
+// }
 
 
 void f()
@@ -84,7 +90,6 @@ void f()
   int g = 546-90;
 
   if (k == g || k == g) {
-    cout << "hey" << endl;
     int h = k - 50 + 97 *g;
     if (h < k && h > k && h < k)
       cout << "h" << endl;
@@ -97,7 +102,6 @@ void f()
 void K::func(int k, int j) 
 {
   if (k == j || k == j || k != j || k == j) {
-    cout << "hey" << endl;
     int h = k - 50 + 97 *j;
     if (h < k && h > k && h < k)
       cout << "h" << endl;
