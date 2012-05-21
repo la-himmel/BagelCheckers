@@ -20,6 +20,8 @@ public:
     CXCursor parent, CXClientData client_data);
   static string GetDiagnostics();
   static string GetStatistics();
+  static void Reset();
+
 private:
   static enum CXChildVisitResult FindPrivateItems(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
@@ -195,6 +197,21 @@ enum CXChildVisitResult UnusedMembersChecker::Check(CXCursor cursor,
   }
 
   return CXChildVisit_Continue;
+}
+
+void UnusedMembersChecker::Reset()
+{
+  currentClass_ = "";
+  fileSection_ = SECTION_OTHER;
+  accessSection_ = ACCESS_OTHER;
+
+//let the stats be common
+  // localFields_ = 0;
+  // unusedVars_ = 0;
+  // unusedMethods_ = 0;
+
+  methods_ = map<string, int>();
+  fields_ = map<string, int>();
 }
 
 #endif

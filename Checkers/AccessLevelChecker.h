@@ -17,12 +17,11 @@ public:
     CXCursor parent, CXClientData client_data);
   static string GetDiagnostics();
   static string GetStatistics();
-
+  static void Reset();
+  
 private:
   static enum CXChildVisitResult FindClassName(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
-
-  static void Reset();
 
   static FileSection fileSection_;
 

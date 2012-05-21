@@ -27,6 +27,8 @@ string ToyNavigator::header_ = "";
 
 void ToyNavigator::SetFile(string str)
 {
+  // cout << "Setting file! " << endl;
+  
   size_t found = str.find_last_of("/\\");
   source_ = str.substr(found +1);
   found = source_.find("cpp");
