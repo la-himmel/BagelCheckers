@@ -16,12 +16,15 @@ using namespace std;
 class ConditionChecker 
 {
 public:
+  static void Run(CXCursor cursor, CXClientData client_data);
+
+private:
   static enum CXChildVisitResult Check(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
   static string GetDiagnostics();
   static string GetStatistics();
+  static void Reset();
 
-private:
   static enum CXChildVisitResult FindStmts(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
 
@@ -78,6 +81,13 @@ int ConditionChecker::level_ = 0;
 
 vector<string> ConditionChecker::conds_ = vector<string>();
 vector<string> ConditionChecker::vars_ = vector<string>();
+
+void ConditionChecker::Run(CXCursor cursor, CXClientData client_data) 
+{
+  Reset();
+  clang_visitChildren(cursor, ConditionChecker::Check, &client_data);
+  cout << FormatDiag(GetDiagnostics()) << GetStatistics() << endl;
+}
 
 string ConditionChecker::GetDiagnostics() 
 {  
@@ -246,6 +256,28 @@ enum CXChildVisitResult ConditionChecker::Check(CXCursor cursor,
   } 
  
   return CXChildVisit_Continue;
+}
+
+void ConditionChecker::Reset()
+{
+  diagnostics_ = "";
+  parentOperator_ = "";
+  lastCondition_ = "";
+  lastBinaryExpr_ = "";
+  lastMember_ = "";
+
+  // doubleVars_ = 0;
+  // contConds_ = 0;
+  // embConds_ = 0;
+
+  lastCondCursor_ = clang_getNullCursor();
+
+  divingInto_ = false;
+  embedded_ = false;
+  level_ = 0;
+
+  conds_ = vector<string>();
+  vars_ = vector<string>();
 }
 
 #endif

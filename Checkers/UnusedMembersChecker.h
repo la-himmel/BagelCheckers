@@ -13,16 +13,19 @@
 
 using namespace std;
 
-class UnusedMembersChecker 
+class UnusedMembersChecker
 {
 public:
+  static void Run(CXCursor cursor, CXClientData client_data);
+
+private:  
   static enum CXChildVisitResult Check(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
   static string GetDiagnostics();
   static string GetStatistics();
   static void Reset();
 
-private:
+
   static enum CXChildVisitResult FindPrivateItems(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
   static enum CXChildVisitResult FindRefsAndCalls(CXCursor cursor,
@@ -53,6 +56,13 @@ int UnusedMembersChecker::unusedMethods_ = 0;
 
 map<string, int> UnusedMembersChecker::methods_ = map<string, int>();
 map<string, int> UnusedMembersChecker::fields_ = map<string, int>();
+
+void UnusedMembersChecker::Run(CXCursor cursor, CXClientData client_data) 
+{
+  Reset();
+  clang_visitChildren(cursor, UnusedMembersChecker::Check, &client_data);
+  cout << FormatDiag(GetDiagnostics()) << GetStatistics() << endl;
+}
 
 string UnusedMembersChecker::GetEntry(CXCursor cursor) 
 {

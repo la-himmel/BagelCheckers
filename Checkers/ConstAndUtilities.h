@@ -56,6 +56,15 @@ bool ToyNavigator::IsInteresting(CXCursor cursor)
   return false;
 }
 
+string FormatDiag(string diag)
+{  
+  if (diag.size()) {
+    diag.append("\n");
+    // cout << diag << endl;
+  }
+  return diag;
+}
+
 void PrintSpelling(CXCursor cursor)
 {
   cout << clang_getCString(clang_getCursorSpelling(cursor)) << endl;

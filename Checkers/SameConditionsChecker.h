@@ -16,12 +16,15 @@ using namespace std;
 class SameConditionsChecker 
 {
 public:
+  static void Run(CXCursor cursor, CXClientData client_data);
+
+private:
   static enum CXChildVisitResult Check(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
   static string GetDiagnostics();
   static string GetStatistics();
+  static void Reset();
 
-private:
   static enum CXChildVisitResult FindStmts(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
 
@@ -36,7 +39,6 @@ private:
 
   static void ChangeLevel(int step); 
   static void UpdateDiagnostics(CXCursor cursor);
-  static void Reset();
 
   static string first_;
   static string second_;
@@ -75,6 +77,13 @@ int SameConditionsChecker::count_ = 0;
 
 bool SameConditionsChecker::gotOne_ = true;
 int SameConditionsChecker::level_ = 0;
+
+void SameConditionsChecker::Run(CXCursor cursor, CXClientData client_data) 
+{
+  Reset();
+  clang_visitChildren(cursor, SameConditionsChecker::Check, &client_data);
+  cout << FormatDiag(GetDiagnostics()) << GetStatistics() << endl;
+}
 
 string SameConditionsChecker::GetDiagnostics() 
 {  

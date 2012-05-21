@@ -1,3 +1,6 @@
+#ifndef _DEADCODECHECKER_H_
+#define _DEADCODECHECKER_H_
+
 #include "Index.h"
 
 #include <iostream>
@@ -11,15 +14,18 @@ using namespace std;
 class DeadCodeChecker 
 {
 public:
+  static void Run(CXCursor cursor, CXClientData client_data);
+
+private:
   static enum CXChildVisitResult Check(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
   static string GetDiagnostics();
 
-private:
   static enum CXChildVisitResult FindDeadCode(CXCursor cursor,
     CXCursor parent, CXClientData client_data); 
   static enum CXChildVisitResult VisitChildren(CXCursor cursor,
     CXCursor parent, CXClientData client_data); 
+  static void Reset();
 
   static bool foundReturnStmt_;
   static string diag_;
@@ -31,6 +37,13 @@ vector<string> DeadCodeChecker::methods_ = vector<string>();
 string DeadCodeChecker::diag_ = "";
 
 bool DeadCodeChecker::foundReturnStmt_ = false;
+
+void DeadCodeChecker::Run(CXCursor cursor, CXClientData client_data) 
+{
+  Reset();
+  clang_visitChildren(cursor, DeadCodeChecker::Check, &client_data);
+  cout << FormatDiag(GetDiagnostics()) << /*GetStatistics() << */endl;
+}
 
 enum CXChildVisitResult DeadCodeChecker::FindDeadCode(CXCursor cursor,
  CXCursor parent, CXClientData client_data) 
@@ -103,3 +116,12 @@ enum CXChildVisitResult DeadCodeChecker::Check(CXCursor cursor,
 
   return CXChildVisit_Continue;
 }
+
+void DeadCodeChecker::Reset()
+{
+  methods_ = vector<string>();
+  diag_ = "";
+}
+
+
+#endif

@@ -13,13 +13,15 @@ using namespace std;
 class AccessLevelChecker 
 {
 public:
+  static void Run(CXCursor cursor, CXClientData client_data);
+
+private:
   static enum CXChildVisitResult Check(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
   static string GetDiagnostics();
   static string GetStatistics();
   static void Reset();
-  
-private:
+
   static enum CXChildVisitResult FindClassName(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
 
@@ -57,6 +59,14 @@ string AccessLevelChecker::baseClass_ = "";
 string AccessLevelChecker::subclass_ = "";
 string AccessLevelChecker::method_ = "";
 string AccessLevelChecker::diagnostics_ = "";
+
+
+void AccessLevelChecker::Run(CXCursor cursor, CXClientData client_data) 
+{
+  Reset();
+  clang_visitChildren(cursor, AccessLevelChecker::Check, &client_data);
+  cout << FormatDiag(GetDiagnostics()) << GetStatistics() << endl;
+}
 
 string AccessLevelChecker::GetDiagnostics() 
 {  
