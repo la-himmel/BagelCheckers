@@ -85,19 +85,12 @@ enum CXChildVisitResult UnusedMembersChecker::FindRefsAndCalls(CXCursor cursor,
 
     if (it != UnusedMembersChecker::methods_.end()) {
         it->second++;       
-        // cout << "Increased : " << endl;  
-        // PrintSpelling(cursor);
     } else {
       map<string, int>::iterator it = fields_.find(entry);
 
       if (it != UnusedMembersChecker::fields_.end()) {
         it->second++;  
-        // cout << "Increased : " << endl;  
-        // PrintSpelling(cursor);
-      } else {
-        // cout << "Found MEMBER reference, not in list: -------- ";
-        // PrintSpelling(cursor);
-      }
+      } 
     }       
   }   
   return CXChildVisit_Recurse;
@@ -155,7 +148,6 @@ enum CXChildVisitResult UnusedMembersChecker::FindPrivateItems(CXCursor cursor,
   }
 
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
-    // PrintSpelling(cursor);
     if (UnusedMembersChecker::accessSection_ == ACCESS_PRIVATE) {
       string entry = GetEntry(cursor);
       
@@ -184,7 +176,6 @@ void UnusedMembersChecker::Check(CXCursor cursor,
   CXCursor parent, CXClientData client_data)
 {   
   if (clang_getCursorKind(cursor) == CXCursor_ClassDecl) {
-    // cout << "class declaration" << endl;
     if (ToyNavigator::IsInteresting(cursor)) {
       UnusedMembersChecker::currentClass_ = 
       clang_getCString(clang_getCursorSpelling(cursor));
@@ -196,7 +187,6 @@ void UnusedMembersChecker::Check(CXCursor cursor,
   }
   
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
-    // cout << "class method" << endl;
     if (ToyNavigator::IsInteresting(cursor)) {
       CXClientData data;
       clang_visitChildren(cursor, UnusedMembersChecker::FindRefsAndCalls, 

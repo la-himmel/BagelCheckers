@@ -12,19 +12,17 @@
 
 using namespace std;
 
-//Todo: fix trash in the end of line
 class ConditionChecker 
 {
 public:
-  static void Run(CXCursor cursor, CXClientData client_data);
+  virtual void Check(CXCursor cursor, 
+    CXCursor parent, CXClientData client_data);
+  virtual string GetDiagnostics();
+  virtual string GetStatistics();
+  virtual void Reset();
+  virtual std::vector<CXCursorKind> GetInterestingCursors();
 
 private:
-  static enum CXChildVisitResult Check(CXCursor cursor, 
-    CXCursor parent, CXClientData client_data);
-  static string GetDiagnostics();
-  static string GetStatistics();
-  static void Reset();
-
   static enum CXChildVisitResult FindStmts(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
 
@@ -82,13 +80,6 @@ int ConditionChecker::level_ = 0;
 vector<string> ConditionChecker::conds_ = vector<string>();
 vector<string> ConditionChecker::vars_ = vector<string>();
 
-void ConditionChecker::Run(CXCursor cursor, CXClientData client_data) 
-{
-  Reset();
-  clang_visitChildren(cursor, ConditionChecker::Check, &client_data);
-  cout << FormatDiag(GetDiagnostics()) << GetStatistics() << endl;
-}
-
 string ConditionChecker::GetDiagnostics() 
 {  
   return ConditionChecker::diagnostics_;
@@ -96,8 +87,8 @@ string ConditionChecker::GetDiagnostics()
 
 string ConditionChecker::GetStatistics()
 {
-  string stat = "DV: " + intToString(doubleVars_) + " CC: " 
-    + intToString(contConds_) + " EC: " + intToString(embConds_) + "\n";
+  string stat = "Double variables: " + intToString(doubleVars_) + "\nContinual conditions: " 
+    + intToString(contConds_) + " Embedded conditions: " + intToString(embConds_) + "\n";
   return stat;
 }
 
@@ -235,13 +226,17 @@ enum CXChildVisitResult ConditionChecker::FindStmts(CXCursor cursor,
   return CXChildVisit_Recurse;
 }
 
-enum CXChildVisitResult ConditionChecker::Check(CXCursor cursor, 
+std::vector<CXCursorKind> ConditionChecker::GetInterestingCursors()
+{
+  vector<CXCursorKind> cursors;
+  cursors.push_back(CXCursor_CXXMethod);
+  cursors.push_back(CXCursor_FunctionDecl);
+  return cursors;
+}
+
+void ConditionChecker::Check(CXCursor cursor, 
   CXCursor parent, CXClientData client_data) 
 {
-  if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {    
-    return CXChildVisit_Break;
-  }
-
   if ((clang_getCursorKind(cursor) == CXCursor_CXXMethod) || 
       (clang_getCursorKind(cursor) == CXCursor_FunctionDecl)) 
   {

@@ -6,22 +6,22 @@
 #include <iostream>
 #include <stdio.h>
 
+#include "IChecker.h"
 #include "ConstAndUtilities.h"
 
 using namespace std;
 
-class AccessLevelChecker 
+class AccessLevelChecker : public IChecker
 {
 public:
-  static void Run(CXCursor cursor, CXClientData client_data);
+  virtual void Check(CXCursor cursor, 
+    CXCursor parent, CXClientData client_data);
+  virtual string GetDiagnostics();
+  virtual string GetStatistics();
+  virtual void Reset();
+  virtual std::vector<CXCursorKind> GetInterestingCursors();
 
 private:
-  static enum CXChildVisitResult Check(CXCursor cursor, 
-    CXCursor parent, CXClientData client_data);
-  static string GetDiagnostics();
-  static string GetStatistics();
-  static void Reset();
-
   static enum CXChildVisitResult FindClassName(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
 
@@ -60,14 +60,6 @@ string AccessLevelChecker::subclass_ = "";
 string AccessLevelChecker::method_ = "";
 string AccessLevelChecker::diagnostics_ = "";
 
-
-void AccessLevelChecker::Run(CXCursor cursor, CXClientData client_data) 
-{
-  Reset();
-  clang_visitChildren(cursor, AccessLevelChecker::Check, &client_data);
-  cout << FormatDiag(GetDiagnostics()) << GetStatistics() << endl;
-}
-
 string AccessLevelChecker::GetDiagnostics() 
 {  
   return AccessLevelChecker::diagnostics_;
@@ -75,7 +67,7 @@ string AccessLevelChecker::GetDiagnostics()
 
 string AccessLevelChecker::GetStatistics() 
 {  
-  string stat = "AL: " + intToString(count_) + "\n";
+  string stat = "Access level: " + intToString(count_) + "\n";
   return stat;  
 }
 
@@ -167,13 +159,16 @@ enum CXChildVisitResult AccessLevelChecker::FindClassName(CXCursor cursor,
   return CXChildVisit_Recurse;
 }
 
-enum CXChildVisitResult AccessLevelChecker::Check(CXCursor cursor, 
-  CXCursor parent, CXClientData client_data) 
+std::vector<CXCursorKind> UnusedMembersChecker::GetInterestingCursors()
 {
-  if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {    
-    return CXChildVisit_Break;
-  }
+  vector<CXCursorKind> cursors;
+  cursors.push_back(CXCursor_ClassDecl);
+  return cursors;
+}
 
+void AccessLevelChecker::Check(CXCursor cursor, 
+  CXCursor parent, CXClientData client_data) 
+{  
   if (clang_getCursorKind(cursor) == CXCursor_ClassDecl) {
     if (ToyNavigator::IsInteresting(cursor)) {
       AccessLevelChecker::fileSection_ = SECTION_CLASS;
