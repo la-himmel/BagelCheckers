@@ -10,22 +10,21 @@
 #include <algorithm>
 
 #include "ConstAndUtilities.h"
+#include "IChecker.h"
 
 using namespace std;
 
-class UnusedMembersChecker
+class UnusedMembersChecker : public IChecker
 {
 public:
-  static void Run(CXCursor cursor, CXClientData client_data);
+  virtual void Check(CXCursor cursor, 
+    CXCursor parent, CXClientData client_data);
+  virtual string GetDiagnostics();
+  virtual string GetStatistics();
+  virtual void Reset();
+  virtual std::vector<CXCursorKind> GetInterestingCursors();
 
 private:  
-  static enum CXChildVisitResult Check(CXCursor cursor, 
-    CXCursor parent, CXClientData client_data);
-  static string GetDiagnostics();
-  static string GetStatistics();
-  static void Reset();
-
-
   static enum CXChildVisitResult FindPrivateItems(CXCursor cursor, 
     CXCursor parent, CXClientData client_data);
   static enum CXChildVisitResult FindRefsAndCalls(CXCursor cursor,
@@ -57,11 +56,12 @@ int UnusedMembersChecker::unusedMethods_ = 0;
 map<string, int> UnusedMembersChecker::methods_ = map<string, int>();
 map<string, int> UnusedMembersChecker::fields_ = map<string, int>();
 
-void UnusedMembersChecker::Run(CXCursor cursor, CXClientData client_data) 
+std::vector<CXCursorKind> UnusedMembersChecker::GetInterestingCursors()
 {
-  Reset();
-  clang_visitChildren(cursor, UnusedMembersChecker::Check, &client_data);
-  cout << FormatDiag(GetDiagnostics()) << GetStatistics() << endl;
+  vector<CXCursorKind> cursors;
+  cursors.push_back(CXCursor_CXXMethod);
+  cursors.push_back(CXCursor_ClassDecl);
+  return cursors;
 }
 
 string UnusedMembersChecker::GetEntry(CXCursor cursor) 
@@ -105,8 +105,8 @@ enum CXChildVisitResult UnusedMembersChecker::FindRefsAndCalls(CXCursor cursor,
 
 string UnusedMembersChecker::GetStatistics()
 {
-  string stat = "UV: " + intToString(unusedVars_) + " UM: " 
-    + intToString(unusedMethods_) + " LV: " + intToString(localFields_) + "\n";
+  string stat = "Unused variables: " + intToString(unusedVars_) 
+    + "\nUnused methods: " + intToString(unusedMethods_) + "\nPotentially local variables: " + intToString(localFields_) + "\n";
   return stat;
 }
 
@@ -180,14 +180,11 @@ enum CXChildVisitResult UnusedMembersChecker::FindPrivateItems(CXCursor cursor,
   return CXChildVisit_Continue;
 }
 
-enum CXChildVisitResult UnusedMembersChecker::Check(CXCursor cursor, 
-  CXCursor parent, CXClientData client_data) 
-{  
-  if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
-    return CXChildVisit_Break;
-  }
-    
+void UnusedMembersChecker::Check(CXCursor cursor, 
+  CXCursor parent, CXClientData client_data)
+{   
   if (clang_getCursorKind(cursor) == CXCursor_ClassDecl) {
+    // cout << "class declaration" << endl;
     if (ToyNavigator::IsInteresting(cursor)) {
       UnusedMembersChecker::currentClass_ = 
       clang_getCString(clang_getCursorSpelling(cursor));
@@ -199,14 +196,13 @@ enum CXChildVisitResult UnusedMembersChecker::Check(CXCursor cursor,
   }
   
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
+    // cout << "class method" << endl;
     if (ToyNavigator::IsInteresting(cursor)) {
       CXClientData data;
       clang_visitChildren(cursor, UnusedMembersChecker::FindRefsAndCalls, 
         &data); 
     }
   }
-
-  return CXChildVisit_Continue;
 }
 
 void UnusedMembersChecker::Reset()

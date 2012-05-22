@@ -7,6 +7,8 @@
 #include <vector>
 #include <list>
 
+#include "Checkers/IChecker.h"
+
 #include "Checkers/UnusedMembersChecker.h"
 #include "Checkers/AccessLevelChecker.h"
 #include "Checkers/DeadCodeChecker.h"
@@ -18,7 +20,44 @@
 
 using namespace std;
 
-using namespace std;
+class Runner 
+{
+public:
+  static IChecker *checker;
+  static void Run(CXCursor cursor, CXClientData client_data) 
+  {
+    if (!checker) {
+      return;
+    }
+
+    checker->Reset();
+    clang_visitChildren(cursor, Runner::Check, &client_data);
+    cout << FormatDiag(checker->GetDiagnostics()) << checker->GetStatistics() << endl;
+  }
+
+  static enum CXChildVisitResult Check(CXCursor cursor,
+    CXCursor parent, CXClientData client_data)
+  {
+    if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {    
+      return CXChildVisit_Break;
+    }
+    if (!checker) {
+      return CXChildVisit_Break;
+    }
+
+    std::vector<CXCursorKind> cursors = checker->GetInterestingCursors();
+    if (std::find(cursors.begin(), cursors.end(), clang_getCursorKind(cursor)) 
+      != cursors.end()) 
+    {
+      if (ToyNavigator::IsInteresting(cursor)) {
+        checker->Check(cursor, parent, client_data);
+      }
+    }
+    return CXChildVisit_Continue;
+  }
+};
+
+IChecker* Runner::checker = NULL;
 
 void ProcessFile(int argc, char* argv[], char* filename)
 {
@@ -45,9 +84,12 @@ void ProcessFile(int argc, char* argv[], char* filename)
   CXClientData data;
 
   // AccessLevelChecker::Run(cursor, &data); 
-  // DeadCodeChecker::Run(cursor, &data); 
-  ConditionChecker::Run(cursor, &data); 
-  SameConditionsChecker::Run(cursor, &data);  
+  // DeadCodeChecker::Run(cursor, &data);
+  Runner::checker = new UnusedMembersChecker;
+  Runner::Run(cursor, &data);
+
+  // ConditionChecker::Run(cursor, &data); 
+  // SameConditionsChecker::Run(cursor, &data);  
   // UnusedMembersChecker::Run(cursor, &data);
 
   clang_disposeTranslationUnit(tUnit); 
