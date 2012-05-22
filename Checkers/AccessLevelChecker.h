@@ -25,6 +25,8 @@ private:
   static enum CXChildVisitResult FindClassName(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
 
+  static void StaticReset();
+
   static FileSection fileSection_;
 
   static AccessSection accessSection_;
@@ -124,7 +126,7 @@ enum CXChildVisitResult AccessLevelChecker::FindClassName(CXCursor cursor,
           count_++;
 
           AccessLevelChecker::diagnostics_.append(diag);
-          Reset();
+          StaticReset();
         }
       }              
     } else {
@@ -159,7 +161,7 @@ enum CXChildVisitResult AccessLevelChecker::FindClassName(CXCursor cursor,
   return CXChildVisit_Recurse;
 }
 
-std::vector<CXCursorKind> UnusedMembersChecker::GetInterestingCursors()
+std::vector<CXCursorKind> AccessLevelChecker::GetInterestingCursors()
 {
   vector<CXCursorKind> cursors;
   cursors.push_back(CXCursor_ClassDecl);
@@ -180,10 +182,9 @@ void AccessLevelChecker::Check(CXCursor cursor,
       clang_visitChildren(cursor, AccessLevelChecker::FindClassName, &data); 
     }
   }
-  return CXChildVisit_Continue;
 }
 
-void AccessLevelChecker::Reset()
+void AccessLevelChecker::StaticReset() 
 {
   AccessLevelChecker::accessSection_ = ACCESS_OTHER;
   AccessLevelChecker::accessSectionBase_ = ACCESS_OTHER;
@@ -197,6 +198,11 @@ void AccessLevelChecker::Reset()
   AccessLevelChecker::baseClass_ = "";
   AccessLevelChecker::subclass_ = "";
   AccessLevelChecker::method_ = "";
+}
+
+void AccessLevelChecker::Reset()
+{
+  StaticReset();  
 }
 
 #endif

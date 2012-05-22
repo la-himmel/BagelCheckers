@@ -9,10 +9,11 @@
 #include <fstream>
 
 #include "ConstAndUtilities.h"
+#include "IChecker.h"
 
 using namespace std;
 
-class ConditionChecker 
+class ConditionChecker : public IChecker
 {
 public:
   virtual void Check(CXCursor cursor, 
@@ -249,8 +250,6 @@ void ConditionChecker::Check(CXCursor cursor,
       clang_visitChildren(cursor, ConditionChecker::FindStmts, &data); 
     }
   } 
- 
-  return CXChildVisit_Continue;
 }
 
 void ConditionChecker::Reset()

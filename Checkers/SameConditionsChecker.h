@@ -10,21 +10,21 @@
 #include <fstream>
 
 #include "ConstAndUtilities.h"
+#include "IChecker.h"
 
 using namespace std;
 
-class SameConditionsChecker 
+class SameConditionsChecker : public IChecker
 {
 public:
-  static void Run(CXCursor cursor, CXClientData client_data);
+  virtual void Check(CXCursor cursor, 
+    CXCursor parent, CXClientData client_data);
+  virtual string GetDiagnostics();
+  virtual string GetStatistics();
+  virtual void Reset();
+  virtual std::vector<CXCursorKind> GetInterestingCursors();
 
 private:
-  static enum CXChildVisitResult Check(CXCursor cursor, 
-    CXCursor parent, CXClientData client_data);
-  static string GetDiagnostics();
-  static string GetStatistics();
-  static void Reset();
-
   static enum CXChildVisitResult FindStmts(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
 
@@ -36,6 +36,8 @@ private:
 
   static enum CXChildVisitResult FindChildren(CXCursor cursor,
     CXCursor parent, CXClientData client_data);
+
+  static void StaticReset();
 
   static void ChangeLevel(int step); 
   static void UpdateDiagnostics(CXCursor cursor);
@@ -78,13 +80,6 @@ int SameConditionsChecker::count_ = 0;
 bool SameConditionsChecker::gotOne_ = true;
 int SameConditionsChecker::level_ = 0;
 
-void SameConditionsChecker::Run(CXCursor cursor, CXClientData client_data) 
-{
-  Reset();
-  clang_visitChildren(cursor, SameConditionsChecker::Check, &client_data);
-  cout << FormatDiag(GetDiagnostics()) << GetStatistics() << endl;
-}
-
 string SameConditionsChecker::GetDiagnostics() 
 {  
   return SameConditionsChecker::diagnostics_;
@@ -94,7 +89,7 @@ string SameConditionsChecker::GetStatistics()
 {
   string stat;
   if (count_) {
-    stat = "NC: " + intToString(count_) + "\n";
+    stat = "Nested conditions: " + intToString(count_) + "\n";
   }
   
   return stat;  
@@ -148,7 +143,7 @@ enum CXChildVisitResult SameConditionsChecker::FindChildren(CXCursor cursor,
 
       SameConditionsChecker::ChangeLevel(-1);    
 
-      Reset();
+      StaticReset();
     }
   } 
 
@@ -256,12 +251,17 @@ enum CXChildVisitResult SameConditionsChecker::FindStmts(CXCursor cursor,
   return CXChildVisit_Recurse;
 }
 
-enum CXChildVisitResult SameConditionsChecker::Check(CXCursor cursor, 
-  CXCursor parent, CXClientData client_data) 
+std::vector<CXCursorKind> SameConditionsChecker::GetInterestingCursors()
 {
-  if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {    
-    return CXChildVisit_Break;
-  }
+  vector<CXCursorKind> cursors;
+  cursors.push_back(CXCursor_CXXMethod);
+  cursors.push_back(CXCursor_FunctionDecl);
+  return cursors;
+}
+
+void SameConditionsChecker::Check(CXCursor cursor, 
+  CXCursor parent, CXClientData client_data) 
+{  
   if ((clang_getCursorKind(cursor) == CXCursor_CXXMethod) || 
       (clang_getCursorKind(cursor) == CXCursor_FunctionDecl)) 
   {
@@ -272,10 +272,8 @@ enum CXChildVisitResult SameConditionsChecker::Check(CXCursor cursor,
       //one level conditions:   
       // clang_visitChildren(cursor, SameConditionsChecker::VisitChildrenCont, &data); 
       clang_visitChildren(cursor, SameConditionsChecker::FindStmts, &data); 
-
-      }
-  }  
-  return CXChildVisit_Continue;
+    }
+  }   
 }
 
 void SameConditionsChecker::ChangeLevel(int step) 
@@ -288,13 +286,18 @@ void SameConditionsChecker::ChangeLevel(int step)
     SameConditionsChecker::level_ = 1;
 }
 
-void SameConditionsChecker::Reset()
+void SameConditionsChecker::StaticReset()
 {
   SameConditionsChecker::gotOne_ = false;
   SameConditionsChecker::first_ = "";
   SameConditionsChecker::second_ = "";
   SameConditionsChecker::firstLoc_ = "";
   SameConditionsChecker::secondLoc_ = "";
+}
+
+void SameConditionsChecker::Reset()
+{
+  StaticReset();
 }
 
 #endif

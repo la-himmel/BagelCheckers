@@ -7,28 +7,31 @@
 #include <stdio.h>
 #include <sstream>
 
+#include "IChecker.h"
 #include <algorithm>
 
 using namespace std;
 
-class DeadCodeChecker 
+class DeadCodeChecker : public IChecker
 {
 public:
-  static void Run(CXCursor cursor, CXClientData client_data);
+  virtual void Check(CXCursor cursor, 
+    CXCursor parent, CXClientData client_data);
+  virtual string GetDiagnostics();
+  virtual string GetStatistics();
+  virtual void Reset();
+  virtual std::vector<CXCursorKind> GetInterestingCursors();
 
 private:
-  static enum CXChildVisitResult Check(CXCursor cursor, 
-    CXCursor parent, CXClientData client_data);
-  static string GetDiagnostics();
-
   static enum CXChildVisitResult FindDeadCode(CXCursor cursor,
     CXCursor parent, CXClientData client_data); 
   static enum CXChildVisitResult VisitChildren(CXCursor cursor,
     CXCursor parent, CXClientData client_data); 
-  static void Reset();
 
   static bool foundReturnStmt_;
   static string diag_;
+
+  static int count_;
 
   static vector<string> methods_;
 };
@@ -36,13 +39,14 @@ private:
 vector<string> DeadCodeChecker::methods_ = vector<string>();
 string DeadCodeChecker::diag_ = "";
 
+int DeadCodeChecker::count_ = 0;
+
 bool DeadCodeChecker::foundReturnStmt_ = false;
 
-void DeadCodeChecker::Run(CXCursor cursor, CXClientData client_data) 
-{
-  Reset();
-  clang_visitChildren(cursor, DeadCodeChecker::Check, &client_data);
-  cout << FormatDiag(GetDiagnostics()) << /*GetStatistics() << */endl;
+string DeadCodeChecker::GetStatistics() 
+{  
+  string stat = "Dead code: " + intToString(count_) + "\n";
+  return stat;  
 }
 
 enum CXChildVisitResult DeadCodeChecker::FindDeadCode(CXCursor cursor,
@@ -70,6 +74,7 @@ enum CXChildVisitResult DeadCodeChecker::FindDeadCode(CXCursor cursor,
       ss << "Dead code detected! " << clang_getCString(filename)
            << " ln: " << line << " col: " << column << endl;
       string str = ss.str();
+      count_++;
 
       clang_disposeString(filename);
 
@@ -100,21 +105,22 @@ enum CXChildVisitResult DeadCodeChecker::VisitChildren(CXCursor cursor,
   return CXChildVisit_Recurse;
 }
 
-enum CXChildVisitResult DeadCodeChecker::Check(CXCursor cursor, 
-  CXCursor parent, CXClientData client_data) 
+std::vector<CXCursorKind> DeadCodeChecker::GetInterestingCursors()
 {
-  if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
-    return CXChildVisit_Break;
-  }
-    
+  vector<CXCursorKind> cursors;
+  cursors.push_back(CXCursor_CXXMethod);
+  return cursors;
+}
+
+void DeadCodeChecker::Check(CXCursor cursor, 
+  CXCursor parent, CXClientData client_data) 
+{    
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod) {
     if (ToyNavigator::IsInteresting(cursor)) {
       CXClientData data;
       clang_visitChildren(cursor, DeadCodeChecker::VisitChildren, &data); 
     }
   }
-
-  return CXChildVisit_Continue;
 }
 
 void DeadCodeChecker::Reset()

@@ -24,6 +24,18 @@ class Runner
 {
 public:
   static IChecker *checker;
+  static CXCursor cursor;
+  static std::vector<IChecker*> checkers;
+
+  static void RunAll()
+  {
+    CXClientData data;
+    for (int i = 0; i < checkers.size(); i++) {
+      Runner::checker = checkers[i];
+      Runner::Run(cursor, &data);
+      Runner::checker = NULL;
+    }
+  }
   static void Run(CXCursor cursor, CXClientData client_data) 
   {
     if (!checker) {
@@ -58,6 +70,8 @@ public:
 };
 
 IChecker* Runner::checker = NULL;
+std::vector<IChecker*> Runner::checkers = std::vector<IChecker*>();
+CXCursor Runner::cursor = clang_getNullCursor();
 
 void ProcessFile(int argc, char* argv[], char* filename)
 {
@@ -80,17 +94,24 @@ void ProcessFile(int argc, char* argv[], char* filename)
     clang_disposeString(str);
   }
 
-  CXCursor cursor = clang_getTranslationUnitCursor(tUnit);
-  CXClientData data;
+  Runner::cursor = clang_getTranslationUnitCursor(tUnit);
 
-  // AccessLevelChecker::Run(cursor, &data); 
-  // DeadCodeChecker::Run(cursor, &data);
-  Runner::checker = new UnusedMembersChecker;
-  Runner::Run(cursor, &data);
+  IChecker* umc = new UnusedMembersChecker;
+  Runner::checkers.push_back(umc);
 
-  // ConditionChecker::Run(cursor, &data); 
-  // SameConditionsChecker::Run(cursor, &data);  
-  // UnusedMembersChecker::Run(cursor, &data);
+  IChecker* alc = new AccessLevelChecker;
+  Runner::checkers.push_back(alc);
+
+  IChecker* dcc = new DeadCodeChecker;
+  Runner::checkers.push_back(dcc);
+
+  IChecker* cc = new ConditionChecker;
+  Runner::checkers.push_back(cc);
+
+  IChecker* scc = new SameConditionsChecker;
+  Runner::checkers.push_back(scc);
+
+  Runner::RunAll();
 
   clang_disposeTranslationUnit(tUnit); 
   clang_disposeIndex(index);
