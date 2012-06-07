@@ -23,6 +23,7 @@ public:
   virtual string GetStatistics();
   virtual void Reset();
   virtual std::vector<CXCursorKind> GetInterestingCursors();
+  virtual std::string GetName();
 
 private:
   static enum CXChildVisitResult FindStmts(CXCursor cursor,
@@ -93,6 +94,11 @@ string SameConditionsChecker::GetStatistics()
   }
   
   return stat;  
+}
+
+string SameConditionsChecker::GetName()
+{
+  return "SameConditionsChecker";
 }
 
 void SameConditionsChecker::UpdateDiagnostics(CXCursor cursor)
@@ -293,6 +299,7 @@ void SameConditionsChecker::StaticReset()
   SameConditionsChecker::second_ = "";
   SameConditionsChecker::firstLoc_ = "";
   SameConditionsChecker::secondLoc_ = "";
+  SameConditionsChecker::diagnostics_ = "";
 }
 
 void SameConditionsChecker::Reset()

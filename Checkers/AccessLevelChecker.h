@@ -20,6 +20,7 @@ public:
   virtual string GetStatistics();
   virtual void Reset();
   virtual std::vector<CXCursorKind> GetInterestingCursors();
+  virtual std::string GetName();
 
 private:
   static enum CXChildVisitResult FindClassName(CXCursor cursor,
@@ -71,6 +72,11 @@ string AccessLevelChecker::GetStatistics()
 {  
   string stat = "Access level: " + intToString(count_) + "\n";
   return stat;  
+}
+
+string AccessLevelChecker::GetName()
+{
+  return "AccessLevelChecker";
 }
 
 enum CXChildVisitResult AccessLevelChecker::FindClassName(CXCursor cursor,

@@ -21,6 +21,7 @@ public:
   virtual string GetStatistics();
   virtual void Reset();
   virtual std::vector<CXCursorKind> GetInterestingCursors();
+  virtual std::string GetName();
 
 private:
   static enum CXChildVisitResult FindDeadCode(CXCursor cursor,
@@ -47,6 +48,11 @@ string DeadCodeChecker::GetStatistics()
 {  
   string stat = "Dead code: " + intToString(count_) + "\n";
   return stat;  
+}
+
+string DeadCodeChecker::GetName()
+{
+  return "DeadCodeChecker";
 }
 
 enum CXChildVisitResult DeadCodeChecker::FindDeadCode(CXCursor cursor,

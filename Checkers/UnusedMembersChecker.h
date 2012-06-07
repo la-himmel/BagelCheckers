@@ -23,6 +23,7 @@ public:
   virtual string GetStatistics();
   virtual void Reset();
   virtual std::vector<CXCursorKind> GetInterestingCursors();
+  virtual std::string GetName();
 
 private:  
   static enum CXChildVisitResult FindPrivateItems(CXCursor cursor, 
@@ -62,6 +63,11 @@ std::vector<CXCursorKind> UnusedMembersChecker::GetInterestingCursors()
   cursors.push_back(CXCursor_CXXMethod);
   cursors.push_back(CXCursor_ClassDecl);
   return cursors;
+}
+
+string UnusedMembersChecker::GetName()
+{
+  return "UnusedMembersChecker";
 }
 
 string UnusedMembersChecker::GetEntry(CXCursor cursor) 

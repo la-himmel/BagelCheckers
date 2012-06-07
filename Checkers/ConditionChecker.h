@@ -22,6 +22,7 @@ public:
   virtual string GetStatistics();
   virtual void Reset();
   virtual std::vector<CXCursorKind> GetInterestingCursors();
+  virtual std::string GetName();
 
 private:
   static enum CXChildVisitResult FindStmts(CXCursor cursor,
@@ -89,7 +90,7 @@ string ConditionChecker::GetDiagnostics()
 string ConditionChecker::GetStatistics()
 {
   string stat = "Double variables: " + intToString(doubleVars_) + "\nContinual conditions: " 
-    + intToString(contConds_) + " Embedded conditions: " + intToString(embConds_) + "\n";
+    + intToString(contConds_) + "\nEmbedded conditions: " + intToString(embConds_) + "\n";
   return stat;
 }
 
@@ -209,6 +210,7 @@ enum CXChildVisitResult ConditionChecker::FindStmtsContinually(CXCursor cursor,
 enum CXChildVisitResult ConditionChecker::FindStmts(CXCursor cursor,
  CXCursor parent, CXClientData client_data) 
 {
+  cout << "findstmt" << endl;
   if (clang_getCursorKind(cursor) == CXCursor_NullStmt) {
     return CXChildVisit_Break;
   }
@@ -235,17 +237,25 @@ std::vector<CXCursorKind> ConditionChecker::GetInterestingCursors()
   return cursors;
 }
 
+string ConditionChecker::GetName()
+{
+  return "ConditionChecker";
+}
+
 void ConditionChecker::Check(CXCursor cursor, 
   CXCursor parent, CXClientData client_data) 
 {
+  cout << "cc: check" << endl;
   if ((clang_getCursorKind(cursor) == CXCursor_CXXMethod) || 
       (clang_getCursorKind(cursor) == CXCursor_FunctionDecl)) 
   {
     if (ToyNavigator::IsInteresting(cursor)) {
       CXClientData data;
       embedded_ = true;
+      cout << "check1" << endl;
       clang_visitChildren(cursor, ConditionChecker::FindStmts, &data); 
 
+      cout << "check2" << endl;
       embedded_ = false;
       clang_visitChildren(cursor, ConditionChecker::FindStmts, &data); 
     }
